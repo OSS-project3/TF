@@ -1,0 +1,66 @@
+/* 카드 및 그리드 공유 스타일 — .card(borderless/bordered/ai-callout), .card-head, .grid, .grid-3, .grid-4 및 반응형 규칙을 정의한다. */
+.card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 20px 0;
+}
+.card.bordered {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+}
+.card.ai-callout {
+  background: var(--ai-soft);
+  border: 1px solid var(--ai-line);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+/* Merged from two .card-head blocks */
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.card-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.card-head .meta {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 0;
+}
+.grid.gapped { gap: 16px; }
+.grid > .card {
+  border-right: 1px solid var(--line);
+  padding: 18px 20px;
+}
+.grid > .card:last-child { border-right: 0; }
+.grid-3 > .card:nth-child(3n) { border-right: 0; }
+.grid-4 > .card:nth-child(4n) { border-right: 0; }
+.grid-3 > .card:nth-child(n+4) { border-top: 1px solid var(--line); }
+.grid-4 > .card:nth-child(n+5) { border-top: 1px solid var(--line); }
+@media (max-width: 980px) {
+  .grid > .card { border-right: 0; border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .grid > .card:last-child { border-bottom: 0; }
+}
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 980px) {
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}

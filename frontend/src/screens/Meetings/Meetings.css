@@ -1,0 +1,116 @@
+/* Meetings 화면 전용 스타일 — 노트 입력(.meeting-input), AI 결과 2단 그리드(.meeting-result), 기록 목록(.meeting-records), 수기 등록(.meeting-manual) */
+
+.meeting-input {
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 16px 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.meeting-input textarea {
+  border: 0;
+  outline: 0;
+  resize: vertical;
+  min-height: 140px;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 0;
+}
+
+.meeting-result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.meeting-result > .card {
+  padding: 20px 24px;
+  border-right: 1px solid var(--line);
+}
+.meeting-result > .card:last-child  { border-right: 0; }
+.meeting-result > .card:first-child { padding-left: 0; }
+.meeting-result > .card:last-child  { padding-right: 0; }
+@media (max-width: 880px) {
+  .meeting-result { grid-template-columns: 1fr; }
+  .meeting-result > .card { border-right: 0; border-bottom: 1px solid var(--line); padding: 20px 0; }
+  .meeting-result > .card:last-child { border-bottom: 0; }
+}
+
+.summary-bullet {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.summary-bullet::before {
+  content: "—";
+  color: var(--muted-2);
+  flex-shrink: 0;
+}
+
+/* ── Records list ────────────────────────────────────────────── */
+.meeting-records {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.meeting-record-item {
+  border-bottom: 1px solid var(--line);
+}
+.meeting-record-item:last-child { border-bottom: 0; }
+
+.meeting-record-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+.meeting-record-header:hover { background: var(--surface); margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+
+.meeting-record-chevron {
+  font-size: 10px;
+  color: var(--muted-2);
+  flex-shrink: 0;
+}
+
+.meeting-record-body {
+  padding: 0 0 16px 0;
+}
+
+.meeting-record-notes { margin-top: 8px; }
+.meeting-notes-pre {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  white-space: pre-wrap;
+  margin: 0;
+  padding: 12px 0;
+}
+
+/* ── Manual entry form ───────────────────────────────────────── */
+.meeting-manual {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.meeting-manual textarea {
+  resize: vertical;
+  min-height: 200px;
+}

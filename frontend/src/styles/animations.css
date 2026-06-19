@@ -1,0 +1,32 @@
+/* 애니메이션 공유 스타일 — .fade-in(fadeup), .spin(로딩 스피너), .thinking-line(AI 추론 shimmer), .ring(하이라이트 링) 및 대응 @keyframes를 정의한다. */
+.fade-in { animation: fadeup 0.4s ease both; }
+@keyframes fadeup {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.spin {
+  width: 12px; height: 12px;
+  border: 1.4px solid var(--ai-line);
+  border-top-color: var(--ai);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.thinking-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ai), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.ring {
+  box-shadow: 0 0 0 2px var(--ai);
+  transition: box-shadow 0.3s ease;
+}

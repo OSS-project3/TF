@@ -1,0 +1,35 @@
+/* 버튼 공유 스타일 — .btn 기본형과 .btn-primary(검정), .btn-ai(AI 보라), .btn-ghost(투명) 변형을 정의한다. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 7px 12px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface); border-color: var(--line-strong); }
+
+.btn-primary {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.btn-primary:hover { background: #222; border-color: #222; }
+
+.btn-ai {
+  background: var(--ai-soft);
+  border-color: var(--ai-line);
+  color: var(--ai);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.btn-ai:hover { background: oklch(0.62 0.18 264 / 0.14); }
+
+.btn-ghost { border-color: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--surface); color: var(--ink); }

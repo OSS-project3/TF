@@ -1,0 +1,23 @@
+/* 뱃지 공유 스타일 — .badge 기본형과 .badge.ai, .badge.ok, .badge.warn, .badge.bad 변형을 정의한다. */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+.badge.ai {
+  background: var(--ai-soft);
+  color: var(--ai);
+  border: 1px solid var(--ai-line);
+  padding: 1px 5px;
+}
+.badge.ok   { background: oklch(0.62 0.14 152 / 0.12); color: var(--ok); }
+.badge.warn { background: oklch(0.72 0.16 70  / 0.14); color: var(--warn); }
+.badge.bad  { background: oklch(0.60 0.20 25  / 0.12); color: var(--bad); }

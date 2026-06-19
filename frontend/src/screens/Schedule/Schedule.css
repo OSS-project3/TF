@@ -1,0 +1,250 @@
+/* Schedule 화면 전용 스타일 — 간트(.schedule-wrap/.schedule-row/.schedule-label/.schedule-track), 캘린더(.schedule-cal), 리스트(.schedule-list), 일정추가 모달 */
+
+/* ── Gantt scroll container ─────────────────────────────────── */
+.schedule-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.schedule-wrap::-webkit-scrollbar        { height: 6px; }
+.schedule-wrap::-webkit-scrollbar-track  { background: var(--surface); }
+.schedule-wrap::-webkit-scrollbar-thumb  { background: var(--line); border-radius: 3px; }
+.schedule-wrap::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+
+/* ── Gantt rows ─────────────────────────────────────────────── */
+.schedule-row {
+  display: flex;
+  min-height: 36px;
+  border-bottom: 1px solid var(--line);
+}
+.schedule-row:last-child { border-bottom: 0; }
+.schedule-month-row,
+.schedule-week-row  { min-height: unset; }
+
+/* Sticky left label */
+.schedule-label {
+  flex-shrink: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 12px;
+  border-right: 1px solid var(--line);
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 3;
+  box-sizing: border-box;
+}
+.schedule-label-header {
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+/* Pixel-based track — week grid lines via background */
+.schedule-track {
+  flex-shrink: 0;
+  position: relative;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0px,
+    transparent 195px,
+    var(--line) 195px,
+    var(--line) 196px
+  );
+}
+
+/* Inline task title + date */
+.schedule-task-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.schedule-task-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+.schedule-task-date {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Month band */
+.schedule-month-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-right: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+/* Weekly tick */
+.schedule-week-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+  font-size: 10px;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Today line — always at left: 0 since START === today */
+.schedule-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--ai);
+  opacity: 0.55;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Project selector in header */
+.schedule-project-select {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--sans);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* ── Calendar view ──────────────────────────────────────────── */
+.schedule-cal {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.schedule-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.schedule-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+}
+.schedule-cal-head {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.schedule-cal-cell {
+  min-height: 90px;
+  padding: 6px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  box-sizing: border-box;
+}
+.schedule-cal-cell.today {
+  background: color-mix(in srgb, var(--ai) 6%, transparent);
+}
+.schedule-cal-empty {
+  background: var(--surface);
+}
+.schedule-cal-day {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+.schedule-cal-cell.today .schedule-cal-day {
+  color: var(--ai);
+}
+.schedule-cal-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.schedule-cal-chip {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--ink);
+  color: #fff;
+  cursor: default;
+}
+.schedule-cal-chip.ai   { background: var(--ai); }
+.schedule-cal-chip.late { background: var(--bad); }
+.schedule-cal-chip.done { background: var(--surface-2); color: var(--muted); }
+.schedule-cal-more {
+  font-size: 10px;
+  color: var(--muted-2);
+  padding-left: 2px;
+}
+
+/* ── List view ──────────────────────────────────────────────── */
+.schedule-list {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.schedule-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.schedule-list-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.schedule-list-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.schedule-list-table tbody tr:last-child td { border-bottom: 0; }
+.schedule-list-table tbody tr:hover td { background: var(--surface); }
+.schedule-list-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── Modal selects ──────────────────────────────────────────── */
+.schedule-modal-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--sans);
+  background: var(--surface);
+  color: var(--ink);
+}

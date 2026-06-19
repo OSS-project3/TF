@@ -1,0 +1,12 @@
+/* Avatar 전용 스타일 — 원형 배경에 이니셜을 표시하는 .avatar 기본 스타일을 정의한다. */
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}

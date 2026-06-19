@@ -1,0 +1,44 @@
+/* 전역 CSS 토큰(디자인 변수)과 기본 리셋 스타일 — :root 색상·반경·폰트 변수, body·button·input 기반 스타일, ::selection을 정의한다. */
+
+/* ===== TeamFlow AI — tokens ===== */
+:root {
+  --bg: #ffffff;
+  --surface: #fafaf9;
+  --surface-2: #f4f3f0;
+  --line: #ececea;
+  --line-strong: #d8d7d3;
+  --ink: #0a0a0a;
+  --ink-2: #2a2a2a;
+  --muted: #707070;
+  --muted-2: #9a9a9a;
+
+  --ai: oklch(0.62 0.18 264);
+  --ai-soft: oklch(0.62 0.18 264 / 0.08);
+  --ai-line: oklch(0.62 0.18 264 / 0.32);
+
+  --ok: oklch(0.62 0.14 152);
+  --warn: oklch(0.72 0.16 70);
+  --bad: oklch(0.60 0.20 25);
+
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --sans: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  font-feature-settings: "ss01", "cv01";
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+::selection { background: var(--ai-soft); }

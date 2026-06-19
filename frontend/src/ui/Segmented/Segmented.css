@@ -1,0 +1,23 @@
+/* Segmented 전용 스타일 — .segmented 래퍼와 활성 버튼(.segmented button.active) 스타일을 정의한다. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface);
+}
+.segmented button {
+  border: 0;
+  background: none;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  border-radius: 4px;
+  transition: all 0.12s ease;
+}
+.segmented button.active {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}

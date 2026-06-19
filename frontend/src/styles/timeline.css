@@ -1,0 +1,78 @@
+/* 간트 차트(타임라인) 공유 스타일 — .tl-row, .tl-label, .tl-track, .tl-grid, .tl-bar(ai/late/done), .tl-header-cells를 정의한다. */
+
+.timeline {
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  border-bottom: 1px solid var(--line);
+  min-height: 44px;
+  align-items: center;
+}
+.tl-row:last-child { border-bottom: 0; }
+.tl-row.header {
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  min-height: 32px;
+}
+
+.tl-label {
+  padding: 8px 14px;
+  border-right: 1px solid var(--line);
+  font-size: 13px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tl-label .who {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tl-track {
+  position: relative;
+  height: 100%;
+  padding: 8px 0;
+}
+
+.tl-grid {
+  position: absolute; inset: 0;
+  display: grid;
+  pointer-events: none;
+}
+.tl-grid > div { border-right: 1px dashed var(--line); }
+
+.tl-bar {
+  position: absolute;
+  height: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ink);
+  border-radius: 4px;
+  display: flex; align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.tl-bar.ai   { background: var(--ai); }
+.tl-bar.late { background: var(--bad); }
+.tl-bar.done { background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+
+.tl-header-cells {
+  display: grid;
+  height: 100%;
+}
+.tl-header-cells > div {
+  display: flex; align-items: center; justify-content: center;
+  border-right: 1px solid var(--line);
+}
+.tl-header-cells > div:last-child { border-right: 0; }

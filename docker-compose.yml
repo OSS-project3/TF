@@ -1,0 +1,28 @@
+# TeamFlow 프론트 + 백엔드 한 번에 실행
+#   실행:  docker compose up --build
+#   접속:  프론트 http://localhost:3000  ·  백엔드/Swagger http://localhost:8080/swagger-ui.html
+#   종료:  docker compose down
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: teamflow-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # application.properties의 ${JWT_SECRET:...} 기본값을 덮어쓰려면 수정
+      JWT_SECRET: dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9ydGVhbWZsb3diYWNrZW5kYXBw
+      # 루트 .env 파일의 OPENAI_API_KEY 를 주입 (없으면 AI 기능 비활성)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: teamflow-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

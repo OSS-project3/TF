@@ -1,0 +1,70 @@
+/* AIThread 전용 스타일 — 오른쪽 AI 패널(.ai-thread), 헤더(.ai-thread-head), 맥동 점(.ai-dot + pulse 애니메이션), 메시지(.ai-msg)를 정의한다. */
+
+.ai-thread {
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  padding: 24px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-thread-head {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.ai-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ai);
+  position: relative;
+}
+.ai-dot::after {
+  content: "";
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--ai);
+  opacity: 0.4;
+  animation: pulse 1.8s ease-out infinite;
+}
+@keyframes pulse {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.ai-msg {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.ai-msg:last-child { border-bottom: 0; }
+.ai-msg time {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted-2);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.ai-msg .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ai);
+  background: var(--bg);
+  border: 1px solid var(--ai-line);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 4px;
+  letter-spacing: 0.02em;
+}

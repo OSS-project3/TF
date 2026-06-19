@@ -1,0 +1,56 @@
+/* 폼 입력 공유 스타일 — .field, label, input/textarea/select, .ai-assist(AI 인라인 힌트 박스)를 정의한다. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.field label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.field input, .field textarea, .field select {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--ink);
+}
+.field textarea { resize: vertical; min-height: 80px; }
+.field .hint {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.ai-assist {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--ai-soft);
+  border: 1px solid var(--ai-line);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--ai);
+  line-height: 1.5;
+}
+.ai-assist .glyph {
+  font-family: var(--mono);
+  font-size: 10px;
+  flex-shrink: 0;
+  padding: 1px 4px;
+  background: var(--bg);
+  border-radius: 3px;
+  border: 1px solid var(--ai-line);
+  margin-top: 1px;
+}

@@ -1,0 +1,110 @@
+/* Sidebar 전용 스타일 — .sidebar, .brand(로고+brandspin 애니메이션), .nav, .nav-item(active), .sidebar-footer, .user-meta를 정의한다. */
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  padding: 24px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--bg);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+}
+.brand-mark {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--ink);
+  position: relative;
+}
+.brand-mark::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 2px;
+  background: var(--ai);
+  animation: brandspin 8s ease-in-out infinite;
+}
+@keyframes brandspin {
+  0%, 100% { transform: rotate(0deg); }
+  50%       { transform: rotate(90deg); }
+}
+.brand-name {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.brand-name .ai {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ai);
+  margin-left: 4px;
+  font-weight: 500;
+  vertical-align: middle;
+  border: 1px solid var(--ai-line);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-section {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-2);
+  padding: 12px 8px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  background: none;
+  border: 0;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s ease;
+}
+.nav-item:hover { background: var(--surface); }
+.nav-item.active { background: var(--ink); color: #fff; }
+.nav-item.active .nav-count { color: rgba(255,255,255,0.7); }
+
+.nav-glyph {
+  width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.nav-count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 8px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.user-meta { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.user-meta strong { font-size: 13px; font-weight: 600; }
+.user-meta span { font-size: 11px; color: var(--muted); }

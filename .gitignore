@@ -1,0 +1,23 @@
+# ── 의존성 ──
+**/node_modules/
+
+# ── 빌드 산출물 ──
+**/dist/
+**/build/
+**/.gradle/
+**/out/
+
+# ── 환경/비밀 ──
+.env
+*.env
+!.env.example
+
+# ── 로그 ──
+*.log
+
+# ── IDE / OS ──
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
