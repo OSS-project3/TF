@@ -2,17 +2,21 @@ package com.example.teamflow.domain.member.service;
 
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
+import com.example.teamflow.domain.invitation.service.InvitationService;
 import com.example.teamflow.domain.member.dto.LoginRequest;
 import com.example.teamflow.domain.member.dto.LoginResponse;
 import com.example.teamflow.domain.member.dto.RegisterRequest;
 import com.example.teamflow.domain.member.entity.Member;
 import com.example.teamflow.domain.member.repository.MemberRepository;
+import com.example.teamflow.domain.workspace.entity.Workspace;
+import com.example.teamflow.domain.workspace.service.WorkspaceService;
 import com.example.teamflow.infra.security.JwtTokenProvider;
 import com.example.teamflow.infra.security.TokenBlacklist;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -24,20 +28,36 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklist tokenBlacklist;
+    private final WorkspaceService workspaceService;
+    private final InvitationService invitationService;
 
     @Transactional
     public LoginResponse register(RegisterRequest req) {
         if (memberRepository.findByEmail(req.email()).isPresent()) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
+
+        // 임시로 workspaceId 없이 저장한 뒤, workspaceId 결정 후 갱신
         Member member = Member.create(
                 req.name(), req.role(), req.initial(),
                 req.weeklyCapacityHours(), req.email(),
-                passwordEncoder.encode(req.password()));
+                passwordEncoder.encode(req.password()),
+                null);
         List<String> skills = req.skills() != null ? req.skills() : List.of();
         skills.forEach(member::addSkill);
         memberRepository.save(member);
-        return new LoginResponse(jwtTokenProvider.generateToken(member.getId(), member.getRole()));
+
+        // 워크스페이스 결정
+        Long workspaceId;
+        if (StringUtils.hasText(req.inviteToken())) {
+            workspaceId = invitationService.consume(req.inviteToken());
+        } else {
+            Workspace workspace = workspaceService.create(req.name() + "의 워크스페이스", member.getId());
+            workspaceId = workspace.getId();
+        }
+        member.setWorkspaceId(workspaceId);
+
+        return new LoginResponse(jwtTokenProvider.generateToken(member.getId(), member.getRole(), workspaceId));
     }
 
     @Transactional(readOnly = true)
@@ -49,8 +69,17 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        String token = jwtTokenProvider.generateToken(member.getId(), member.getRole());
+        String token = jwtTokenProvider.generateToken(member.getId(), member.getRole(), member.getWorkspaceId());
         return new LoginResponse(token);
+    }
+
+    @Transactional
+    public LoginResponse acceptInvitation(String inviteToken, Long memberId) {
+        Long workspaceId = invitationService.consume(inviteToken);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        member.setWorkspaceId(workspaceId);
+        return new LoginResponse(jwtTokenProvider.generateToken(memberId, member.getRole(), workspaceId));
     }
 
     public void logout(String token) {

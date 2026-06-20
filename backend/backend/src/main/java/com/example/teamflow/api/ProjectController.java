@@ -80,7 +80,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(
             @Parameter(description = "프로젝트 ID", required = true, example = "1")
             @PathVariable Long projectId,
-            @RequestBody ProjectUpdateRequest request) {
+            @Valid @RequestBody ProjectUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(projectService.updateProject(projectId, request)));
     }
 

@@ -18,7 +18,8 @@ public record TaskResponse(
         LocalDate startDate,
         LocalDate endDate,
         boolean isCriticalPath,
-        boolean isLateRisk
+        boolean isLateRisk,
+        String gitBranch
 ) {
     public static TaskResponse of(Task task, List<Long> dependencyTaskIds) {
         return new TaskResponse(
@@ -34,7 +35,8 @@ public record TaskResponse(
                 task.getStartDate(),
                 task.getEndDate(),
                 task.isCriticalPath(),
-                task.isLateRisk()
+                task.isLateRisk(),
+                task.getGitBranch()
         );
     }
 }

@@ -55,6 +55,9 @@ public class Task extends BaseTimeEntity {
     @Column(name = "is_late_risk", nullable = false)
     private boolean lateRisk;
 
+    @Column(name = "git_branch", length = 100)
+    private String gitBranch;
+
     public static Task create(Long projectId, String title, String phase,
                               int estimatedHours, TaskDifficulty difficulty,
                               Long assigneeId, LocalDate startDate, LocalDate endDate) {
@@ -105,5 +108,9 @@ public class Task extends BaseTimeEntity {
     public void updateFlags(Boolean criticalPath, Boolean lateRisk) {
         if (criticalPath != null) this.criticalPath = criticalPath;
         if (lateRisk != null) this.lateRisk = lateRisk;
+    }
+
+    public void linkGitBranch(String gitBranch) {
+        this.gitBranch = gitBranch;
     }
 }

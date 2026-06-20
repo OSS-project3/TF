@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { memberApi, ApiError } from '../../api'
+import { memberApi, invitationApi, ApiError } from '../../api'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function Settings({ onDeleted }) {
@@ -10,6 +10,9 @@ export default function Settings({ onDeleted }) {
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [pwMsg, setPwMsg] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [inviteLink, setInviteLink] = useState(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteCopied, setInviteCopied] = useState(false)
 
   useEffect(() => {
     memberApi.getMe().then(me => {
@@ -42,6 +45,21 @@ export default function Settings({ onDeleted }) {
       const text = e instanceof ApiError && e.code === 'WRONG_PASSWORD' ? '현재 비밀번호가 올바르지 않습니다.' : (e?.message || '변경 실패')
       setPwMsg({ ok: false, text })
     }
+  }
+
+  async function generateInvite() {
+    setInviteLoading(true); setInviteLink(null); setInviteCopied(false)
+    try {
+      const data = await invitationApi.createInvitation()
+      setInviteLink(`${window.location.origin}/signup?token=${data.token}`)
+    } catch (e) { alert(e?.message || '초대 링크 생성 실패') }
+    finally { setInviteLoading(false) }
+  }
+
+  async function copyInvite() {
+    if (!inviteLink) return
+    try { await navigator.clipboard.writeText(inviteLink); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 2000) }
+    catch { alert('클립보드 복사에 실패했습니다.') }
   }
 
   async function deleteAccount() {
@@ -78,6 +96,26 @@ export default function Settings({ onDeleted }) {
           {pwMsg && <div className="tiny" style={{ color: pwMsg.ok ? 'var(--ok)' : 'var(--bad)', marginBottom: 8 }}>{pwMsg.ok ? '✓' : '⚠'} {pwMsg.text}</div>}
           <div className="row"><button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto' }} disabled={!pw.currentPassword}>비밀번호 변경</button></div>
         </form>
+
+        <div className="card">
+          <div className="card-head"><h3>팀원 초대</h3></div>
+          <p className="muted" style={{ fontSize: 13, marginBottom: 12 }}>초대 링크를 생성하여 팀원에게 공유하세요. 링크는 7일간 유효합니다.</p>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={generateInvite} disabled={inviteLoading}>
+              {inviteLoading ? '생성 중…' : '초대 링크 생성'}
+            </button>
+            {inviteLink && (
+              <button className="btn" onClick={copyInvite}>
+                {inviteCopied ? '복사됨!' : '링크 복사'}
+              </button>
+            )}
+          </div>
+          {inviteLink && (
+            <div style={{ marginTop: 10, padding: '8px 10px', background: 'var(--surface-2, #f5f5f5)', borderRadius: 6, fontSize: 12, wordBreak: 'break-all', color: 'var(--muted)' }}>
+              {inviteLink}
+            </div>
+          )}
+        </div>
 
         <div className="card" style={{ borderColor: 'var(--bad)' }}>
           <div className="card-head"><h3 style={{ color: 'var(--bad)' }}>위험 구역</h3></div>

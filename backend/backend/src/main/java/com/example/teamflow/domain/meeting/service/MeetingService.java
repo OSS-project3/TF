@@ -2,6 +2,7 @@ package com.example.teamflow.domain.meeting.service;
 
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
+import com.example.teamflow.common.security.WorkspaceContext;
 import com.example.teamflow.domain.meeting.dto.MeetingCreateRequest;
 import com.example.teamflow.domain.meeting.dto.MeetingCreateResponse;
 import com.example.teamflow.domain.meeting.dto.MeetingResponse;
@@ -27,9 +28,10 @@ public class MeetingService {
 
     @Transactional(readOnly = true)
     public List<MeetingResponse> getMeetings(Long projectId, LocalDate from, LocalDate to) {
+        Long workspaceId = WorkspaceContext.get();
         List<Meeting> meetings = (projectId != null)
-                ? meetingRepository.findByProjectIdAndDateRange(projectId, from, to)
-                : meetingRepository.findByDateRange(from, to);
+                ? meetingRepository.findByWorkspaceIdAndProjectIdAndDateRange(workspaceId, projectId, from, to)
+                : meetingRepository.findByWorkspaceIdAndDateRange(workspaceId, from, to);
         return meetings.stream().map(MeetingResponse::from).toList();
     }
 
@@ -48,7 +50,8 @@ public class MeetingService {
             projectService.findById(t.projectId());
         });
 
-        Meeting meeting = Meeting.create(req.title(), req.date(), req.notes(), req.manual());
+        Long workspaceId = WorkspaceContext.get();
+        Meeting meeting = Meeting.create(req.title(), req.date(), req.notes(), req.manual(), workspaceId);
 
         req.attendeeMemberIds().forEach(meeting::addAttendee);
 

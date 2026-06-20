@@ -21,4 +21,20 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findByProjectIdAndDateRange(@Param("projectId") Long projectId,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
+
+    @Query("SELECT m FROM Meeting m WHERE m.workspaceId = :workspaceId " +
+           "AND (:from IS NULL OR m.date >= :from) AND (:to IS NULL OR m.date <= :to) " +
+           "ORDER BY m.date DESC")
+    List<Meeting> findByWorkspaceIdAndDateRange(@Param("workspaceId") Long workspaceId,
+                                                @Param("from") LocalDate from,
+                                                @Param("to") LocalDate to);
+
+    @Query("SELECT DISTINCT m FROM Meeting m JOIN m.todos t WHERE m.workspaceId = :workspaceId " +
+           "AND t.projectId = :projectId " +
+           "AND (:from IS NULL OR m.date >= :from) AND (:to IS NULL OR m.date <= :to) " +
+           "ORDER BY m.date DESC")
+    List<Meeting> findByWorkspaceIdAndProjectIdAndDateRange(@Param("workspaceId") Long workspaceId,
+                                                             @Param("projectId") Long projectId,
+                                                             @Param("from") LocalDate from,
+                                                             @Param("to") LocalDate to);
 }

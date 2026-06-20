@@ -5,6 +5,8 @@ import com.example.teamflow.common.response.PageResponse;
 import com.example.teamflow.domain.meeting.dto.MeetingCreateRequest;
 import com.example.teamflow.domain.meeting.dto.MeetingCreateResponse;
 import com.example.teamflow.domain.meeting.dto.MeetingResponse;
+import com.example.teamflow.domain.meeting.dto.MeetingTaskApplyResponse;
+import com.example.teamflow.domain.meeting.facade.MeetingTaskFacade;
 import com.example.teamflow.domain.meeting.service.MeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +31,7 @@ import java.util.List;
 public class MeetingController {
 
     private final MeetingService meetingService;
+    private final MeetingTaskFacade meetingTaskFacade;
 
     @Operation(
             summary = "회의록 목록 조회",
@@ -57,6 +60,18 @@ public class MeetingController {
             @Parameter(description = "회의록 ID", required = true, example = "1")
             @PathVariable Long meetingId) {
         return ResponseEntity.ok(ApiResponse.success(meetingService.getMeeting(meetingId)));
+    }
+
+    @Operation(
+            summary = "회의 TODO → 태스크 변환",
+            description = "회의록의 미적용 TODO를 프로젝트 태스크로 일괄 변환합니다. 이미 적용된 TODO는 건너뜁니다."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "MEETING_NOT_FOUND | PROJECT_NOT_FOUND")
+    @PostMapping("/{meetingId}/tasks")
+    public ResponseEntity<ApiResponse<MeetingTaskApplyResponse>> applyTodosToTasks(
+            @Parameter(description = "회의록 ID", required = true, example = "1")
+            @PathVariable Long meetingId) {
+        return ResponseEntity.ok(ApiResponse.success(meetingTaskFacade.applyTodosToTasks(meetingId)));
     }
 
     @Operation(summary = "회의록 저장", description = "`manual: false` — AI 요약 결과 저장 (summary·todos 포함). `manual: true` — 수기 등록 (summary 빈 배열 허용, notes 필수). 저장된 회의록 ID 반환.")

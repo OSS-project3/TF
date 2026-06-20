@@ -32,6 +32,8 @@ public class Meeting extends BaseTimeEntity {
     @Column(name = "is_manual", nullable = false)
     private boolean manual;
 
+    private Long workspaceId;
+
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MeetingAttendee> attendees = new ArrayList<>();
 
@@ -42,12 +44,13 @@ public class Meeting extends BaseTimeEntity {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MeetingTodo> todos = new ArrayList<>();
 
-    public static Meeting create(String title, LocalDate date, String notes, boolean manual) {
+    public static Meeting create(String title, LocalDate date, String notes, boolean manual, Long workspaceId) {
         Meeting m = new Meeting();
         m.title = title;
         m.date = date;
         m.notes = notes;
         m.manual = manual;
+        m.workspaceId = workspaceId;
         return m;
     }
 

@@ -67,6 +67,12 @@ export const changeTaskAssignee = (taskId, assigneeId) =>
   api.patch(`/tasks/${taskId}/assignee`, { assigneeId })
 
 /**
+ * 태스크 삭제. DELETE /tasks/{taskId}
+ * @param {number} taskId
+ */
+export const deleteTask = (taskId) => api.delete(`/tasks/${taskId}`)
+
+/**
  * 내 태스크 조회 (오늘/이번주/이후 그룹화). GET /me/tasks
  * @param {('TODO'|'IN_PROGRESS'|'DONE'|'BLOCKED')} [status] 상태 필터
  * @returns {Promise<{ today: Task[], thisWeek: Task[], later: Task[] }>}

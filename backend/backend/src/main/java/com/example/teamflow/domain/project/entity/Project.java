@@ -32,12 +32,15 @@ public class Project extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private ProjectStatus status;
 
-    public static Project create(String name, String goal, LocalDate deadline) {
+    private Long workspaceId;
+
+    public static Project create(String name, String goal, LocalDate deadline, Long workspaceId) {
         Project project = new Project();
         project.name = name;
         project.goal = goal;
         project.deadline = deadline;
         project.status = ProjectStatus.ACTIVE;
+        project.workspaceId = workspaceId;
         return project;
     }
 

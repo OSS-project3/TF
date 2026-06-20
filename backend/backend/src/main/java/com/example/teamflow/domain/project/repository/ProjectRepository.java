@@ -16,4 +16,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "WHERE pm.memberId = :memberId AND p.status = :status")
     List<Project> findAllByMemberIdAndStatus(@Param("memberId") Long memberId,
                                              @Param("status") ProjectStatus status);
+
+    List<Project> findAllByWorkspaceIdAndStatus(Long workspaceId, ProjectStatus status);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN ProjectMember pm ON pm.projectId = p.id " +
+           "WHERE pm.memberId = :memberId AND p.workspaceId = :workspaceId AND p.status = :status")
+    List<Project> findAllByMemberIdAndWorkspaceIdAndStatus(@Param("memberId") Long memberId,
+                                                            @Param("workspaceId") Long workspaceId,
+                                                            @Param("status") ProjectStatus status);
 }

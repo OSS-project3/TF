@@ -13,7 +13,7 @@ import Meetings from './screens/Meetings/Meetings'
 import Schedule from './screens/Schedule/Schedule'
 import Settings from './screens/Settings/Settings'
 import { useAuth } from './context/AuthContext.jsx'
-import { projectApi, memberApi, dashboardApi, taskApi, aiApi } from './api'
+import { projectApi, memberApi, dashboardApi, taskApi } from './api'
 import { adaptMember, adaptProject } from './api/adapt'
 
 export default function Workspace() {
@@ -73,25 +73,35 @@ export default function Workspace() {
 
   async function handleLogout() { await logout(); navigate('/login', { replace: true }) }
 
-  async function createProject({ name, goal, deadline, members: memberIds }) {
+  async function createProject({ name, goal, deadline, members: memberIds, tasks }) {
     const ids = Array.from(new Set([...memberIds.map(Number), Number(user.id)]))
-    const { id } = await projectApi.createProject({ name, goal, deadline, memberIds: ids })
-    // AI 작업 분해 → 태스크 생성 (키 없거나 실패 시 건너뜀)
-    try {
-      const res = await aiApi.decompose({ goal, deadline, memberIds: ids })
-      await Promise.all((res.tasks || []).map((t, i) =>
-        taskApi.createTask(id, {
-          title: t.title,
-          phase: t.phase || '개발',
-          estimatedHours: t.estimatedHours > 0 ? t.estimatedHours : 4,
-          difficulty: String(t.difficulty || 'MEDIUM').toUpperCase(),
-          assigneeId: ids[i % ids.length],
-        }).catch(() => {})
-      ))
-    } catch { /* AI 비활성/오류 → 빈 프로젝트로 생성 */ }
+    const { id } = await projectApi.createProject({ name, goal: goal || name, deadline, memberIds: ids })
+    await Promise.all((tasks || []).map(t =>
+      taskApi.createTask(id, {
+        title: t.title,
+        phase: t.phase || '개발',
+        estimatedHours: Number(t.estimatedHours) > 0 ? Number(t.estimatedHours) : null,
+        difficulty: String(t.difficulty || 'MEDIUM').toUpperCase(),
+        assigneeId: t.assigneeId ? Number(t.assigneeId) : null,
+        startDate: t.startDate || null,
+        endDate: t.endDate || null,
+      }).catch(() => {})
+    ))
     setCreateOpen(false)
     await load()
     openProject(String(id))
+  }
+
+  async function updateProject(projectId, { name, goal, deadline, memberIds }) {
+    await projectApi.updateProject(Number(projectId), { name, goal, deadline })
+    if (memberIds) await projectApi.replaceProjectMembers(Number(projectId), memberIds.map(Number))
+    await load()
+  }
+
+  async function archiveProject(projectId) {
+    await projectApi.archiveProject(Number(projectId))
+    setOpenProjectId(null)
+    await load()
   }
 
   if (loading) {
@@ -109,7 +119,7 @@ export default function Workspace() {
     main = <div className="page"><div className="placeholder" style={{ padding: 40, color: 'var(--bad)' }}>{error}</div></div>
   } else if (openProjectId && currentProject) {
     crumbs = ['TeamFlow', '프로젝트', currentProject.name]
-    main = <ProjectDetail project={currentProject} members={members} back={() => setOpenProjectId(null)} role={role} currentUser={currentUser} />
+    main = <ProjectDetail project={currentProject} members={members} back={() => setOpenProjectId(null)} role={role} currentUser={currentUser} onUpdate={updateProject} onArchive={archiveProject} />
   } else if (tab === 'settings') {
     crumbs = ['TeamFlow', '설정']
     main = <Settings onDeleted={() => navigate('/login', { replace: true })} />

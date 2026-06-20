@@ -7,3 +7,5 @@ CLAUDE.md
 **/build
 **/.gradle
 frontend
+**/application-local.properties
+**/application-local.yml

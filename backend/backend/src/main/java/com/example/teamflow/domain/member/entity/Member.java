@@ -39,11 +39,14 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
+    private Long workspaceId;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MemberSkill> skills = new ArrayList<>();
 
     public static Member create(String name, MemberRole role, String initial,
-                                int weeklyCapacityHours, String email, String password) {
+                                int weeklyCapacityHours, String email, String password,
+                                Long workspaceId) {
         Member member = new Member();
         member.name = name;
         member.role = role;
@@ -51,6 +54,7 @@ public class Member extends BaseTimeEntity {
         member.weeklyCapacityHours = weeklyCapacityHours;
         member.email = email;
         member.password = password;
+        member.workspaceId = workspaceId;
         return member;
     }
 
@@ -70,5 +74,9 @@ public class Member extends BaseTimeEntity {
 
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 }

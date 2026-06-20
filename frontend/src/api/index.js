@@ -15,5 +15,6 @@ export * as taskApi from './tasks.js'
 export * as meetingApi from './meetings.js'
 export * as dashboardApi from './dashboard.js'
 export * as aiApi from './ai.js'
+export * as invitationApi from './invitations.js'
 
 export { api, ApiError, getToken, setToken, clearToken } from './client.js'

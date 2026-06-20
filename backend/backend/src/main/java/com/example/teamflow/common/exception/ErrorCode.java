@@ -17,6 +17,7 @@ public enum ErrorCode {
     // Project
     PROJECT_NOT_FOUND("PROJECT_NOT_FOUND", "프로젝트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     DUPLICATE_PROJECT_MEMBER("DUPLICATE_PROJECT_MEMBER", "이미 프로젝트에 소속된 멤버입니다.", HttpStatus.CONFLICT),
+    INVALID_DEADLINE("INVALID_DEADLINE", "마감일은 오늘부터 5년 이내여야 합니다.", HttpStatus.BAD_REQUEST),
 
     // Task
     TASK_NOT_FOUND("TASK_NOT_FOUND", "작업을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -29,13 +30,27 @@ public enum ErrorCode {
     // Schedule
     PROPOSAL_NOT_FOUND("PROPOSAL_NOT_FOUND", "일정 재최적화 제안을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+    // AI
+    AI_SERVICE_ERROR("AI_SERVICE_ERROR", "AI 서비스 호출 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    AI_PARSE_FAILED("AI_PARSE_FAILED", "AI 응답 파싱에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    AI_SESSION_NOT_FOUND("AI_SESSION_NOT_FOUND", "AI 세션을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    AI_SESSION_EXPIRED("AI_SESSION_EXPIRED", "AI 세션이 만료되었습니다.", HttpStatus.UNPROCESSABLE_ENTITY),
+    AI_SESSION_INVALID("AI_SESSION_INVALID", "유효하지 않은 AI 세션 상태입니다.", HttpStatus.UNPROCESSABLE_ENTITY),
+
+    // Webhook
+    WEBHOOK_SIGNATURE_INVALID("WEBHOOK_SIGNATURE_INVALID", "웹훅 서명이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED),
+
+    // Invitation
+    INVITE_INVALID("INVITE_INVALID", "유효하지 않은 초대 코드입니다.", HttpStatus.BAD_REQUEST),
+    INVITE_EXPIRED("INVITE_EXPIRED", "만료된 초대 코드입니다.", HttpStatus.BAD_REQUEST),
+    INVITE_USED("INVITE_USED", "이미 사용된 초대 코드입니다.", HttpStatus.BAD_REQUEST),
+
+    // Workspace
+    WORKSPACE_NOT_FOUND("WORKSPACE_NOT_FOUND", "워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
     // Auth
     UNAUTHORIZED("UNAUTHORIZED", "인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
-    FORBIDDEN("FORBIDDEN", "권한이 없습니다.", HttpStatus.FORBIDDEN),
-
-    // AI
-    AI_DISABLED("AI_DISABLED", "AI 기능이 비활성화되어 있습니다. OPENAI_API_KEY를 설정하세요.", HttpStatus.SERVICE_UNAVAILABLE),
-    AI_ERROR("AI_ERROR", "AI 처리 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY);
+    FORBIDDEN("FORBIDDEN", "권한이 없습니다.", HttpStatus.FORBIDDEN);
 
     private final String code;
     private final String message;

@@ -10,6 +10,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       # application.properties의 ${JWT_SECRET:...} 기본값을 덮어쓰려면 수정
       JWT_SECRET: dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9ydGVhbWZsb3diYWNrZW5kYXBw
       # 루트 .env 파일의 OPENAI_API_KEY 를 주입 (없으면 AI 기능 비활성)

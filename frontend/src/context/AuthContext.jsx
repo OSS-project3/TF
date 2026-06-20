@@ -55,16 +55,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const register = async (name, email, password, role) => {
+  const register = async (name, email, password, role, inviteToken) => {
     try {
       await authApi.register({
         name,
         email,
         password,
         role: toBackendRole(role),
-        initial: name?.[0] ?? '?',   // 백엔드 필수 필드 — 이름 첫 글자로 기본 설정
-        weeklyCapacityHours: 40,     // 기본 주간 가용 시간
+        initial: name?.[0] ?? '?',
+        weeklyCapacityHours: 40,
         skills: [],
+        ...(inviteToken ? { inviteToken } : {}),
       })
       const me = await memberApi.getMe()
       setUser(buildSession(me))

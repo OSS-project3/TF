@@ -35,12 +35,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 Claims claims = jwtTokenProvider.getClaims(token);
                 Long memberId = Long.parseLong(claims.getSubject());
                 String role = claims.get("role", String.class);
+                Long workspaceId = jwtTokenProvider.getWorkspaceId(token);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         memberId,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 );
+                authentication.setDetails(workspaceId);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

@@ -103,8 +103,9 @@ public class TaskController {
     public ResponseEntity<ApiResponse<Void>> changeStatus(
             @Parameter(description = "태스크 ID", required = true, example = "10")
             @PathVariable Long taskId,
+            @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody TaskStatusUpdateRequest request) {
-        taskService.changeStatus(taskId, request.status());
+        taskService.changeStatus(taskId, request.status(), memberId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -119,6 +120,16 @@ public class TaskController {
             @PathVariable Long taskId,
             @Valid @RequestBody TaskAssigneeUpdateRequest request) {
         taskService.changeAssignee(taskId, request.assigneeId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @Operation(summary = "태스크 삭제", description = "태스크를 삭제합니다. 연결된 선행 관계 및 실행 로그도 함께 삭제됩니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "TASK_NOT_FOUND")
+    @DeleteMapping("/api/v1/tasks/{taskId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTask(
+            @Parameter(description = "태스크 ID", required = true, example = "10")
+            @PathVariable Long taskId) {
+        taskService.deleteTask(taskId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

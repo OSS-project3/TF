@@ -28,16 +28,23 @@ public class JwtTokenProvider {
         this.accessTokenExpiry = accessTokenExpiry;
     }
 
-    public String generateToken(Long memberId, MemberRole role) {
+    public String generateToken(Long memberId, MemberRole role, Long workspaceId) {
         Date now = new Date();
         return Jwts.builder()
                 .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(memberId))
                 .claim("role", role.name())
+                .claim("wid", workspaceId)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessTokenExpiry))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    /** @deprecated 워크스페이스 ID 없이 생성 — 하위 호환용 */
+    @Deprecated
+    public String generateToken(Long memberId, MemberRole role) {
+        return generateToken(memberId, role, null);
     }
 
     public String getJti(String token) {
@@ -72,5 +79,13 @@ public class JwtTokenProvider {
 
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    public Long getWorkspaceId(String token) {
+        Object wid = getClaims(token).get("wid");
+        if (wid == null) return null;
+        if (wid instanceof Long l) return l;
+        if (wid instanceof Integer i) return i.longValue();
+        return Long.parseLong(wid.toString());
     }
 }

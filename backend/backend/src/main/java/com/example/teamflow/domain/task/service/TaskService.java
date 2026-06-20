@@ -8,7 +8,9 @@ import com.example.teamflow.domain.project.service.ProjectService;
 import com.example.teamflow.domain.task.dto.*;
 import com.example.teamflow.domain.task.entity.Task;
 import com.example.teamflow.domain.task.entity.TaskDependency;
+import com.example.teamflow.domain.task.entity.TaskExecutionLog;
 import com.example.teamflow.domain.task.repository.TaskDependencyRepository;
+import com.example.teamflow.domain.task.repository.TaskExecutionLogRepository;
 import com.example.teamflow.domain.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskDependencyRepository taskDependencyRepository;
+    private final TaskExecutionLogRepository taskExecutionLogRepository;
     private final ProjectService projectService;
     private final MemberService memberService;
 
@@ -47,12 +50,13 @@ public class TaskService {
                 projectId,
                 request.title(),
                 request.phase(),
-                request.estimatedHours(),
+                request.estimatedHours() != null ? request.estimatedHours() : 0,
                 request.difficulty(),
                 request.assigneeId(),
                 request.startDate(),
                 request.endDate()
         );
+        if (request.gitBranch() != null) task.linkGitBranch(request.gitBranch().isBlank() ? null : request.gitBranch());
         taskRepository.save(task);
 
         if (request.dependencyTaskIds() != null && !request.dependencyTaskIds().isEmpty()) {
@@ -75,14 +79,18 @@ public class TaskService {
         task.updateDifficulty(request.difficulty());
         task.updateDates(request.startDate(), request.endDate());
         task.updateFlags(request.isCriticalPath(), request.isLateRisk());
+        if (request.gitBranch() != null) task.linkGitBranch(request.gitBranch().isBlank() ? null : request.gitBranch());
         List<Long> deps = getDependencyIds(taskId);
         return TaskResponse.of(task, deps);
     }
 
     @Transactional
-    public void changeStatus(Long taskId, TaskStatus newStatus) {
+    public void changeStatus(Long taskId, TaskStatus newStatus, Long memberId) {
         Task task = findById(taskId);
+        TaskStatus fromStatus = task.getStatus();
         task.changeStatus(newStatus);
+        taskExecutionLogRepository.save(
+                TaskExecutionLog.create(taskId, memberId, fromStatus, newStatus));
     }
 
     @Transactional
@@ -117,6 +125,27 @@ public class TaskService {
         }
 
         return new MyTasksResponse(todayList, thisWeekList, laterList);
+    }
+
+    @Transactional
+    public int completeByGitBranch(String gitBranch) {
+        List<Task> tasks = taskRepository.findByGitBranchAndNotDone(gitBranch);
+        tasks.forEach(task -> {
+            TaskStatus from = task.getStatus();
+            task.changeStatus(TaskStatus.DONE);
+            taskExecutionLogRepository.save(
+                    TaskExecutionLog.create(task.getId(), null, from, TaskStatus.DONE));
+        });
+        return tasks.size();
+    }
+
+    @Transactional
+    public void deleteTask(Long taskId) {
+        findById(taskId);
+        taskDependencyRepository.deleteAllByTaskId(taskId);
+        taskDependencyRepository.deleteAllByPrerequisiteTaskId(taskId);
+        taskExecutionLogRepository.deleteAllByTaskId(taskId);
+        taskRepository.deleteById(taskId);
     }
 
     public Task findById(Long taskId) {

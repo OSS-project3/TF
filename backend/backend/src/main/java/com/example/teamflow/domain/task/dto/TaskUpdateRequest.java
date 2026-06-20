@@ -14,5 +14,6 @@ public record TaskUpdateRequest(
         @Schema(description = "새 시작일 (yyyy-MM-dd)", example = "2026-06-15") LocalDate startDate,
         @Schema(description = "새 마감일 (yyyy-MM-dd)", example = "2026-06-25") LocalDate endDate,
         @Schema(description = "크리티컬 패스 여부") Boolean isCriticalPath,
-        @Schema(description = "지연 위험 여부") Boolean isLateRisk
+        @Schema(description = "지연 위험 여부") Boolean isLateRisk,
+        @Schema(description = "연동할 GitHub 브랜치명 (머지 시 자동 완료)", example = "feat/user-crud") String gitBranch
 ) {}

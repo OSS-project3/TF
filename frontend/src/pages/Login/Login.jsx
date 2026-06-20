@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { invitationApi } from '../../api'
 import '../auth.css'
 
 const DEMO = [
@@ -12,6 +13,8 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const [searchParams] = useSearchParams()
+  const inviteToken = searchParams.get('token') || undefined
 
   const [form, setForm] = useState({ email: '', password: '' })
   const [remember, setRemember] = useState(true)
@@ -25,9 +28,12 @@ export default function Login() {
     if (!form.email || !form.password) { setError('이메일과 비밀번호를 입력해주세요.'); return }
     setError(''); setLoading(true)
     const result = await login(form.email, form.password, remember)
+    if (!result.ok) { setLoading(false); setError(result.message); return }
+    if (inviteToken) {
+      try { await invitationApi.acceptInvitation(inviteToken, remember) } catch { /* 만료·사용된 토큰은 무시 */ }
+    }
     setLoading(false)
-    if (result.ok) navigate(from, { replace: true })
-    else setError(result.message)
+    navigate(from, { replace: true })
   }
 
   return (
@@ -38,7 +44,12 @@ export default function Login() {
           <div className="brand-name" style={{ fontSize: 16, fontWeight: 600 }}>TeamFlow<span className="ai">AI</span></div>
         </div>
         <h1 className="auth-title">로그인</h1>
-        <p className="auth-sub">계정이 없으신가요? <Link to="/signup" style={{ color: 'var(--ai)', fontWeight: 500 }}>회원가입</Link></p>
+        {inviteToken && (
+          <div style={{ background: 'var(--ai-bg, #eff6ff)', border: '1px solid var(--ai)', borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 13 }}>
+            초대 링크로 접속했습니다. 로그인하면 팀 워크스페이스에 합류합니다.
+          </div>
+        )}
+        <p className="auth-sub">계정이 없으신가요? <Link to={inviteToken ? `/signup?token=${inviteToken}` : '/signup'} style={{ color: 'var(--ai)', fontWeight: 500 }}>회원가입</Link></p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">

@@ -3,6 +3,7 @@ package com.example.teamflow.domain.member.service;
 import com.example.teamflow.common.enums.MemberRole;
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
+import com.example.teamflow.common.security.WorkspaceContext;
 import com.example.teamflow.domain.member.dto.MemberResponse;
 import com.example.teamflow.domain.member.dto.MemberUpdateRequest;
 import com.example.teamflow.domain.member.dto.PasswordChangeRequest;
@@ -36,9 +37,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<MemberResponse> getMembers(MemberRole role) {
+        Long workspaceId = WorkspaceContext.get();
         List<Member> members = (role != null)
-                ? memberRepository.findAllByRoleWithSkills(role)
-                : memberRepository.findAllWithSkills();
+                ? memberRepository.findAllByWorkspaceIdAndRoleWithSkills(workspaceId, role)
+                : memberRepository.findAllByWorkspaceIdWithSkills(workspaceId);
         return members.stream().map(MemberResponse::from).toList();
     }
 
@@ -98,9 +100,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<TeamWorkloadResponse> getTeamWorkloads(List<Long> memberIds, LocalDate from, LocalDate to) {
+        Long workspaceId = WorkspaceContext.get();
         List<Member> members = (memberIds != null)
                 ? memberRepository.findAllByIdInWithSkills(memberIds)
-                : memberRepository.findAllWithSkills();
+                : memberRepository.findAllByWorkspaceIdWithSkills(workspaceId);
         return members.stream()
                 .map(m -> {
                     WorkloadResponse w = computeWorkload(m, from, to);

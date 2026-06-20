@@ -39,4 +39,28 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByAssigneeAndDateRange(@Param("memberId") Long memberId,
                                           @Param("from") LocalDate from,
                                           @Param("to") LocalDate to);
+
+    // 지연 태스크 목록 (endDate < today && status != DONE)
+    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId " +
+           "AND t.endDate < :today AND t.status <> 'DONE'")
+    List<Task> findLateByProjectId(@Param("projectId") Long projectId,
+                                   @Param("today") LocalDate today);
+
+    // BLOCKED 태스크 목록
+    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = 'BLOCKED'")
+    List<Task> findBlockedByProjectId(@Param("projectId") Long projectId);
+
+    // IN_PROGRESS 태스크 목록
+    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = 'IN_PROGRESS'")
+    List<Task> findInProgressByProjectId(@Param("projectId") Long projectId);
+
+    // 담당자별 IN_PROGRESS 태스크 수
+    @Query("SELECT t.assigneeId, COUNT(t) FROM Task t WHERE t.projectId = :projectId " +
+           "AND t.status = 'IN_PROGRESS' AND t.assigneeId IS NOT NULL " +
+           "GROUP BY t.assigneeId")
+    List<Object[]> countInProgressByAssignee(@Param("projectId") Long projectId);
+
+    // GitHub 웹훅 — 브랜치명 일치 + 미완료 태스크
+    @Query("SELECT t FROM Task t WHERE t.gitBranch = :gitBranch AND t.status <> 'DONE'")
+    List<Task> findByGitBranchAndNotDone(@Param("gitBranch") String gitBranch);
 }

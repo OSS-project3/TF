@@ -3,6 +3,7 @@ package com.example.teamflow.domain.project.service;
 import com.example.teamflow.common.enums.ProjectStatus;
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
+import com.example.teamflow.common.security.WorkspaceContext;
 import com.example.teamflow.domain.member.dto.MemberResponse;
 import com.example.teamflow.domain.member.service.MemberService;
 import com.example.teamflow.domain.project.dto.*;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -30,10 +32,11 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectResponse> getProjects(Long memberId, ProjectStatus status) {
         ProjectStatus effectiveStatus = (status != null) ? status : ProjectStatus.ACTIVE;
+        Long workspaceId = WorkspaceContext.get();
 
         List<Project> projects = (memberId != null)
-                ? projectRepository.findAllByMemberIdAndStatus(memberId, effectiveStatus)
-                : projectRepository.findAllByStatus(effectiveStatus);
+                ? projectRepository.findAllByMemberIdAndWorkspaceIdAndStatus(memberId, workspaceId, effectiveStatus)
+                : projectRepository.findAllByWorkspaceIdAndStatus(workspaceId, effectiveStatus);
 
         return projects.stream()
                 .map(p -> toResponse(p))
@@ -42,11 +45,13 @@ public class ProjectService {
 
     @Transactional
     public ProjectCreateResponse createProject(ProjectCreateRequest request) {
+        validateDeadlineRange(request.deadline());
         if (request.memberIds() != null) {
             memberService.validateMembersExist(request.memberIds());
         }
+        Long workspaceId = WorkspaceContext.get();
 
-        Project project = Project.create(request.name(), request.goal(), request.deadline());
+        Project project = Project.create(request.name(), request.goal(), request.deadline(), workspaceId);
         projectRepository.save(project);
 
         if (request.memberIds() != null) {
@@ -67,6 +72,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse updateProject(Long projectId, ProjectUpdateRequest request) {
+        validateDeadlineRange(request.deadline());
         Project project = findById(projectId);
         project.updateName(request.name());
         project.updateGoal(request.goal());
@@ -131,6 +137,12 @@ public class ProjectService {
     @Transactional
     public void removeMemberFromAllProjects(Long memberId) {
         projectMemberRepository.deleteAllByMemberId(memberId);
+    }
+
+    private void validateDeadlineRange(LocalDate deadline) {
+        if (deadline != null && deadline.isAfter(LocalDate.now().plusYears(5))) {
+            throw new BusinessException(ErrorCode.INVALID_DEADLINE);
+        }
     }
 
     private ProjectResponse toResponse(Project project) {

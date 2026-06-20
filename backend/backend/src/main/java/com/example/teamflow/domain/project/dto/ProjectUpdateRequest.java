@@ -1,6 +1,7 @@
 package com.example.teamflow.domain.project.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.FutureOrPresent;
 
 import java.time.LocalDate;
 
@@ -8,5 +9,5 @@ import java.time.LocalDate;
 public record ProjectUpdateRequest(
         @Schema(description = "새 프로젝트 이름", example = "TeamFlow v2.1") String name,
         @Schema(description = "새 목표", example = "기능 개선") String goal,
-        @Schema(description = "새 마감일 (yyyy-MM-dd)", example = "2027-03-01") LocalDate deadline
+        @Schema(description = "새 마감일 (yyyy-MM-dd)", example = "2027-03-01") @FutureOrPresent(message = "마감일은 오늘 이후여야 합니다.") LocalDate deadline
 ) {}

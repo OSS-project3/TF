@@ -45,6 +45,7 @@ export const adaptTask = (t) => ({
   endDate: t.endDate ?? null,
   critical: !!t.isCriticalPath,
   lateRisk: !!t.isLateRisk,
+  gitBranch: t.gitBranch ?? null,
 })
 
 export const indexBy = (arr, key = 'id') => {
