@@ -78,7 +78,7 @@ export default function Sidebar({ tab, setTab, counts, role, currentUser, onSett
           <Avatar member={currentUser} />
           <div className="user-meta" style={{ flex: 1, minWidth: 0 }}>
             <strong>{currentUser?.name}</strong>
-            <span>{currentUser?.role} · {role === 'pm' ? 'PM 뷰' : '팀원 뷰'}</span>
+            <span>{currentUser?.role}</span>
           </div>
           <span style={{ fontSize: 11, color: 'var(--muted)' }}>⇅</span>
         </button>

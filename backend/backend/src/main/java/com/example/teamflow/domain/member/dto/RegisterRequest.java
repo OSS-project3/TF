@@ -10,7 +10,10 @@ import java.util.List;
 public record RegisterRequest(
         @Schema(description = "이름", example = "김민서") @NotBlank String name,
         @Schema(description = "이메일", example = "minseo@teamflow.dev") @Email @NotBlank String email,
-        @Schema(description = "비밀번호 (8자 이상)", example = "password123") @NotBlank @Size(min = 8) String password,
+        @Schema(description = "비밀번호 (영문+숫자 포함, 8자 이상)", example = "password123")
+        @NotBlank
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$", message = "비밀번호는 영문과 숫자를 모두 포함하여 8자 이상이어야 합니다.")
+        String password,
         @Schema(description = "역할", example = "PM") @NotNull MemberRole role,
         @Schema(description = "이니셜 (최대 2자)", example = "민") @NotBlank @Size(max = 2) String initial,
         @Schema(description = "주간 가용 시간(h)", example = "40") @Min(1) int weeklyCapacityHours,

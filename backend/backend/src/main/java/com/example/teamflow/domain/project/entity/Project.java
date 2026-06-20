@@ -22,7 +22,7 @@ public class Project extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 10000)
     private String goal;
 
     @Column(nullable = false)

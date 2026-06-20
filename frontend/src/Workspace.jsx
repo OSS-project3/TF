@@ -133,7 +133,7 @@ export default function Workspace() {
     main = <Projects projects={projects} members={members} openProject={openProject} openCreate={() => setCreateOpen(true)} role={role} currentUser={currentUser} />
   } else if (tab === 'team') {
     crumbs = ['TeamFlow', '팀']
-    main = <Team members={members} workloads={workloads} role={role} />
+    main = <Team members={members} workloads={workloads} role={role} onReload={load} />
   } else if (tab === 'meetings') {
     crumbs = ['TeamFlow', '회의록']
     main = <Meetings members={members} projects={projects} />
@@ -156,7 +156,7 @@ export default function Workspace() {
       <main className="main">
         <Topbar
           crumbs={crumbs}
-          actions={role === 'member' ? <span className="badge ai">팀원 뷰</span> : <span className="badge ai">PM 뷰</span>}
+          actions={role === 'member' ? <span className="badge ai">팀원</span> : <span className="badge ai">PM</span>}
         />
         {main}
       </main>

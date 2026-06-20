@@ -8,6 +8,21 @@ import { adaptTask } from '../../api/adapt'
 const PX_PER_DAY = 28
 const DAY = 86400000
 
+// 담당자별 색상 — 원색 대신 톤다운된 세련된(muted) 팔레트
+const OWNER_COLORS = [
+  '#5b7a9d', // dusty blue
+  '#6f8f6a', // sage green
+  '#a8745c', // muted clay
+  '#9c6b84', // dusty mauve
+  '#4f8285', // muted teal
+  '#847aa6', // dusty lavender
+  '#a8894e', // muted ochre
+  '#7a7e85', // slate gray
+  '#9d6f6f', // dusty rose
+  '#5f8f8a', // muted seafoam
+]
+const UNASSIGNED_COLOR = '#aab0b6' // 미배정 — 중립 회색
+
 export default function Schedule({ projects, members, role, currentUser }) {
   const isMember = role === 'member'
   const [viewMode, setViewMode] = useState('gantt')
@@ -18,6 +33,14 @@ export default function Schedule({ projects, members, role, currentUser }) {
 
   const project = projects.find(p => p.id === selectedProjectId) ?? projects[0]
   const memberById = useMemo(() => new Map(members.map(m => [m.id, m])), [members])
+
+  // 담당자 id → 색상 (멤버 순서 기준으로 안정적으로 배정)
+  const colorByOwner = useMemo(() => {
+    const map = new Map()
+    members.forEach((m, i) => map.set(m.id, OWNER_COLORS[i % OWNER_COLORS.length]))
+    return map
+  }, [members])
+  const ownerColor = (owner) => (owner && colorByOwner.get(owner)) || UNASSIGNED_COLOR
 
   useEffect(() => {
     if (!selectedProjectId) { setTasks([]); setLoading(false); return }
@@ -69,15 +92,69 @@ export default function Schedule({ projects, members, role, currentUser }) {
     return out
   }, [range])
 
+  // 담당자 색상 범례
+  const legend = Object.keys(grouped).length > 0 && (
+    <div className="schedule-legend">
+      {Object.keys(grouped).map(mid => (
+        <span key={mid || 'none'} className="schedule-legend-item">
+          <span className="schedule-legend-dot" style={{ background: ownerColor(mid) }} />
+          {memberById.get(mid)?.name ?? '미배정'}
+        </span>
+      ))}
+    </div>
+  )
+
   const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
   const calYear = calMonth.getFullYear()
   const calMon = calMonth.getMonth()
   const calFirstWkday = new Date(calYear, calMon, 1).getDay()
   const calDaysInMonth = new Date(calYear, calMon + 1, 0).getDate()
-  const tasksOnDay = (day) => {
-    const off = Math.round((new Date(calYear, calMon, day) - range.start) / DAY)
-    return items.filter(t => t.startDay <= off && off < t.endDay)
+  const offsetOfDay = (day) => Math.round((new Date(calYear, calMon, day) - range.start) / DAY)
+  const isToday = (day) => {
+    const n = new Date()
+    return n.getFullYear() === calYear && n.getMonth() === calMon && n.getDate() === day
   }
+
+  // 달력을 주 단위 행렬로 구성 (앞쪽 빈칸 + 1~말일 + 뒤쪽 빈칸)
+  const calWeeks = []
+  {
+    const cells = []
+    for (let i = 0; i < calFirstWkday; i++) cells.push(null)
+    for (let d = 1; d <= calDaysInMonth; d++) cells.push(d)
+    while (cells.length % 7 !== 0) cells.push(null)
+    for (let i = 0; i < cells.length; i += 7) calWeeks.push(cells.slice(i, i + 7))
+  }
+
+  // 각 주별로 일정을 연속 막대(컬럼 span)로 만들고, 겹치면 다른 lane(줄)에 배치
+  const weekBars = calWeeks.map(week => {
+    const segs = []
+    items.forEach(it => {
+      let first = -1, last = -1
+      for (let ci = 0; ci < 7; ci++) {
+        const day = week[ci]
+        if (day == null) continue
+        const off = offsetOfDay(day)
+        if (it.startDay <= off && off < it.endDay) { if (first === -1) first = ci; last = ci }
+      }
+      if (first === -1) return
+      segs.push({
+        id: it.id, owner: it.owner, title: it.title, kind: it.kind, done: it.done,
+        first, last,
+        startsHere: offsetOfDay(week[first]) === it.startDay,   // 막대가 이 주에서 시작
+        endsHere: offsetOfDay(week[last]) === it.endDay - 1,    // 막대가 이 주에서 끝
+      })
+    })
+    // lane 배정 — 컬럼 범위가 겹치지 않으면 같은 줄 재사용
+    segs.sort((a, b) => a.first - b.first || b.last - a.last)
+    const laneEnd = []
+    segs.forEach(s => {
+      let lane = 0
+      while (lane < laneEnd.length && laneEnd[lane] >= s.first) lane++
+      laneEnd[lane] = s.last
+      s.lane = lane
+    })
+    return { segs, lanes: laneEnd.length }
+  })
 
   return (
     <div className="page" data-screen-label="Schedule">
@@ -102,6 +179,8 @@ export default function Schedule({ projects, members, role, currentUser }) {
       {!loading && items.length === 0 && <div className="placeholder" style={{ padding: 32 }}><div className="mono">EMPTY</div><div>일정이 없습니다.</div></div>}
 
       {!loading && items.length > 0 && viewMode === 'gantt' && (
+        <>
+        {legend}
         <div className="schedule-wrap">
           <div className="schedule-row schedule-week-row">
             <div className="schedule-label schedule-label-header" style={{ fontSize: 11, color: 'var(--muted-2)' }}>담당자 / 작업</div>
@@ -135,9 +214,17 @@ export default function Schedule({ projects, members, role, currentUser }) {
                       </div>
                     </div>
                     <div className="schedule-track" style={{ width: TOTAL_W }}>
-                      <div className={'tl-bar' + (r.kind ? ' ' + r.kind : '') + (r.done ? ' done' : '')}
-                        style={{ left: r.startDay * PX_PER_DAY, width: (r.endDay - r.startDay) * PX_PER_DAY }}>
-                        {r.kind === 'ai' && <span style={{ marginRight: 6, opacity: 0.8 }}>✸</span>}
+                      <div className="tl-bar"
+                        style={{
+                          left: r.startDay * PX_PER_DAY,
+                          width: (r.endDay - r.startDay) * PX_PER_DAY,
+                          background: ownerColor(r.owner),
+                          color: '#fff',
+                          opacity: r.done ? 0.5 : 1,
+                          textDecoration: r.done ? 'line-through' : 'none',
+                          boxShadow: r.kind === 'late' ? 'inset 0 0 0 2px var(--bad)' : undefined,
+                        }}>
+                        {r.kind === 'ai' && <span style={{ marginRight: 6, opacity: 0.85 }}>✸</span>}
                         {r.title}
                       </div>
                     </div>
@@ -147,35 +234,62 @@ export default function Schedule({ projects, members, role, currentUser }) {
             )
           })}
         </div>
+        </>
       )}
 
       {!loading && items.length > 0 && viewMode === 'cal' && (
+        <>
+        {legend}
         <div className="schedule-cal">
           <div className="schedule-cal-nav">
             <button className="btn btn-ghost" onClick={() => setCalMonth(new Date(calYear, calMon - 1, 1))}>‹</button>
             <span style={{ fontWeight: 600, fontSize: 15 }}>{calYear}년 {calMon + 1}월</span>
             <button className="btn btn-ghost" onClick={() => setCalMonth(new Date(calYear, calMon + 1, 1))}>›</button>
           </div>
-          <div className="schedule-cal-grid">
-            {DAY_NAMES.map(d => <div key={d} className="schedule-cal-head">{d}</div>)}
-            {Array.from({ length: calFirstWkday }).map((_, i) => <div key={'e' + i} className="schedule-cal-cell schedule-cal-empty" />)}
-            {Array.from({ length: calDaysInMonth }).map((_, i) => {
-              const day = i + 1
-              const dayTasks = tasksOnDay(day)
+          <div className="cal-weekdays">
+            {DAY_NAMES.map(d => <div key={d} className="cal-weekday">{d}</div>)}
+          </div>
+          <div className="cal-body">
+            {calWeeks.map((week, wi) => {
+              const { segs, lanes } = weekBars[wi]
+              const DAY_NUM_H = 22, BAR_H = 16, BAR_GAP = 3
+              const minH = Math.max(82, DAY_NUM_H + lanes * (BAR_H + BAR_GAP) + 8)
               return (
-                <div key={day} className="schedule-cal-cell">
-                  <span className="schedule-cal-day">{day}</span>
-                  <div className="schedule-cal-tasks">
-                    {dayTasks.slice(0, 3).map(t => (
-                      <div key={t.id} className={'schedule-cal-chip' + (t.kind ? ' ' + t.kind : '') + (t.done ? ' done' : '')} title={t.title}>{t.title}</div>
+                <div className="cal-week" key={wi} style={{ minHeight: minH }}>
+                  <div className="cal-week-cells">
+                    {week.map((day, ci) => (
+                      <div key={ci} className={'cal-cell' + (day == null ? ' empty' : '') + (day != null && isToday(day) ? ' today' : '')}>
+                        {day != null && <span className="cal-day">{day}</span>}
+                      </div>
                     ))}
-                    {dayTasks.length > 3 && <div className="schedule-cal-more">+{dayTasks.length - 3}개</div>}
                   </div>
+                  {segs.map(s => (
+                    <div key={s.id} className="cal-bar" title={s.title}
+                      style={{
+                        top: DAY_NUM_H + s.lane * (BAR_H + BAR_GAP),
+                        height: BAR_H,
+                        left: `calc(${s.first} * (100% / 7) + 4px)`,
+                        width: `calc(${s.last - s.first + 1} * (100% / 7) - 8px)`,
+                        background: ownerColor(s.owner),
+                        color: '#fff',
+                        opacity: s.done ? 0.5 : 1,
+                        textDecoration: s.done ? 'line-through' : 'none',
+                        borderTopLeftRadius: s.startsHere ? 4 : 0,
+                        borderBottomLeftRadius: s.startsHere ? 4 : 0,
+                        borderTopRightRadius: s.endsHere ? 4 : 0,
+                        borderBottomRightRadius: s.endsHere ? 4 : 0,
+                        boxShadow: s.kind === 'late' ? 'inset 0 0 0 1.5px var(--bad)' : undefined,
+                      }}>
+                      {s.startsHere && s.kind === 'ai' && <span style={{ marginRight: 4 }}>✸</span>}
+                      {s.title}
+                    </div>
+                  ))}
                 </div>
               )
             })}
           </div>
         </div>
+        </>
       )}
 
       {!loading && items.length > 0 && viewMode === 'list' && (

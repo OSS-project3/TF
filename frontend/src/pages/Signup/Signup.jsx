@@ -22,6 +22,7 @@ export default function Signup() {
     if (!form.name.trim()) { setError('이름을 입력해주세요.'); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('올바른 이메일 형식이 아닙니다.'); return }
     if (form.password.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return }
+    if (!/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) { setError('비밀번호는 영문과 숫자를 모두 포함해야 합니다.'); return }
     if (form.password !== form.confirm) { setError('비밀번호가 일치하지 않습니다.'); return }
     setError(''); setLoading(true)
     const result = await register(form.name.trim(), form.email.trim(), form.password, form.role, inviteToken)
@@ -58,7 +59,7 @@ export default function Signup() {
               ))}
             </div>
           </div>
-          <div className="field"><label>비밀번호 (8자 이상)</label>
+          <div className="field"><label>비밀번호 (영문+숫자, 8자 이상)</label>
             <input type="password" value={form.password} onChange={e => set('password', e.target.value)} autoComplete="new-password" /></div>
           <div className="field"><label>비밀번호 확인</label>
             <input type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} autoComplete="new-password" /></div>

@@ -103,11 +103,15 @@ public class AiController {
     @PostMapping("/api/v1/ai/decompositions")
     public ResponseEntity<ApiResponse<AiDecomposeResponse>> decompose(
             @Valid @RequestBody AiDecomposeRequest request) {
+        java.time.LocalDate deadline = (request.deadline() != null && !request.deadline().isBlank())
+                ? java.time.LocalDate.parse(request.deadline()) : null;
         TaskDecomposeAgent.DecomposeResult result =
-                taskDecomposeAgent.decompose(request.goal(), java.util.Map.of()).data();
+                taskDecomposeAgent.decompose(request.goal(), java.util.Map.of(),
+                        java.time.LocalDate.now(), deadline).data();
         java.util.List<AiDecomposeResponse.TaskItem> tasks = result.tasks().stream()
                 .map(t -> new AiDecomposeResponse.TaskItem(
-                        t.title(), t.phase(), t.estimatedHours(), t.difficulty()))
+                        t.title(), t.phase(), t.estimatedHours(), t.difficulty(),
+                        t.startDate(), t.endDate()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(new AiDecomposeResponse(tasks)));
     }
