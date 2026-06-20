@@ -31,7 +31,7 @@ npm run preview    # 빌드 결과 미리보기
 ### Docker (프론트+백엔드 한 번에)
 루트의 `docker-compose.yml` 사용 — 자세한 내용은 [루트 README](../README.md) 참고.
 ```bash
-# 프로젝트 루트(AutoFlow)에서
+# 프로젝트 루트(TeamFlow)에서
 docker compose up --build
 # 프론트: http://localhost:3000
 ```
@@ -54,6 +54,9 @@ src/
 │   ├── tasks.js         # 태스크 CRUD·상태/담당자 변경·내 작업
 │   ├── meetings.js      # 회의록 목록·상세·저장
 │   ├── dashboard.js     # PM/멤버 대시보드
+│   ├── ai.js            # AI 회의 요약·태스크 분해
+│   ├── invitations.js   # 초대 링크 생성·수락
+│   ├── adapt.js         # 백엔드 응답 → 화면 모델 보정
 │   ├── mappers.js       # 백엔드 enum ↔ 한글 라벨 변환
 │   └── index.js         # 통합 export
 ├── components/          # Sidebar, Layout, Protected/AdminRoute
@@ -100,7 +103,8 @@ try {
 
 - 인증은 JWT. 로그인/회원가입 성공 시 토큰을 `localStorage('tf_token')`에 저장하고 모든 요청에 `Authorization: Bearer` 헤더를 자동 첨부합니다.
 - **PM 역할 = 관리자**로 취급합니다(백엔드에 별도 관리자 플래그 없음).
-- 다음은 백엔드 미구현(또는 미지원)이라 목 데이터/로컬 동작으로 유지됩니다:
-  - AI 작업 분해·회의 요약 (Phase 3 미구현) — 클라이언트 템플릿 생성 후 결과만 실제 저장
+- AI 작업 분해와 회의 요약은 백엔드의 `/api/v1/ai/decompositions`, `/api/v1/ai/meeting-summaries`와 연동됩니다. OpenAI 키가 없거나 AI 호출이 실패하면 일부 생성 흐름은 클라이언트 템플릿 결과로 폴백합니다.
+- 회원가입 또는 로그인 URL에 `?token=...`이 있으면 초대 워크스페이스 합류 플로우가 동작합니다.
+- 다음은 백엔드 미지원이라 화면에서 제한적으로만 동작합니다:
   - 관리자 사용자 관리(역할변경·활성화·삭제) — 해당 API 없음, 목록만 실제 조회
   - 작업 우선순위/카테고리 등 일부 필드 — 백엔드 모델에 없음
