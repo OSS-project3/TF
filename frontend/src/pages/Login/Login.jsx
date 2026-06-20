@@ -5,8 +5,8 @@ import { invitationApi } from '../../api'
 import '../auth.css'
 
 const DEMO = [
-  { email: 'admin@teamflow.ai', password: 'admin1234', label: '관리자(PM)' },
-  { email: 'demo@teamflow.ai', password: 'demo1234', label: '일반 사용자' },
+  { email: 'admin@teamflow.ai', password: 'Admin!Teamflow2026', label: '관리자(PM)' },
+  { email: 'demo@teamflow.ai', password: 'Demo!Teamflow2026', label: '일반 사용자' },
 ]
 
 export default function Login() {
