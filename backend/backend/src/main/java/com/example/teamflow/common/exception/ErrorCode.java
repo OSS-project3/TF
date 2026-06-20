@@ -44,6 +44,13 @@ public enum ErrorCode {
     INVITE_INVALID("INVITE_INVALID", "유효하지 않은 초대 코드입니다.", HttpStatus.BAD_REQUEST),
     INVITE_EXPIRED("INVITE_EXPIRED", "만료된 초대 코드입니다.", HttpStatus.BAD_REQUEST),
     INVITE_USED("INVITE_USED", "이미 사용된 초대 코드입니다.", HttpStatus.BAD_REQUEST),
+    INVITE_NOT_FOUND("INVITE_NOT_FOUND", "초대를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVITE_TARGET_NOT_FOUND("INVITE_TARGET_NOT_FOUND", "해당 이메일의 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVITE_ALREADY_MEMBER("INVITE_ALREADY_MEMBER", "이미 워크스페이스에 속한 멤버입니다.", HttpStatus.CONFLICT),
+    INVITE_ALREADY_SENT("INVITE_ALREADY_SENT", "이미 초대를 보낸 사용자입니다.", HttpStatus.CONFLICT),
+    INVITE_SELF("INVITE_SELF", "자기 자신은 초대할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    INVITE_FORBIDDEN("INVITE_FORBIDDEN", "해당 초대에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    INVITE_NOT_PENDING("INVITE_NOT_PENDING", "이미 처리된 초대입니다.", HttpStatus.CONFLICT),
 
     // Workspace
     WORKSPACE_NOT_FOUND("WORKSPACE_NOT_FOUND", "워크스페이스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
