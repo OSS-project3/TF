@@ -21,7 +21,8 @@ function TaskEditor({ tasks, setTasks, members }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ overflowX: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 660 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 96px 96px 84px 96px 48px 24px', gap: 4 }}>
         <span className="tiny muted" style={{ fontSize: 10 }}>제목</span>
         <span className="tiny muted" style={{ fontSize: 10 }}>단계</span>
@@ -52,6 +53,7 @@ function TaskEditor({ tasks, setTasks, members }) {
         </div>
       ))}
       <button className="btn" style={{ width: 'fit-content', fontSize: 12, padding: '4px 10px' }} onClick={() => setTasks(prev => [...prev, emptyTask(members)])}>+ 작업 추가</button>
+    </div>
     </div>
   )
 }
@@ -96,8 +98,8 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
         _key: Math.random(),
         title: t.title || '',
         phase: t.phase || '개발',
-        startDate: '',
-        endDate: '',
+        startDate: t.startDate || '',
+        endDate: t.endDate || '',
         difficulty: String(t.difficulty || 'MEDIUM').toUpperCase(),
         assigneeId: ids[i % ids.length] ?? null,
         estimatedHours: t.estimatedHours > 0 ? String(t.estimatedHours) : '',
@@ -165,8 +167,29 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
   if (mode === 'ai') {
     const totalSteps = 3
     return (
-      <div className="modal-bg" onClick={onClose}>
-        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: step === 3 ? 640 : 480 }}>
+      <div className="modal-bg" onClick={aiLoading ? undefined : onClose}>
+        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: aiLoading ? 460 : (step === 3 ? 820 : 480) }}>
+          {aiLoading ? (
+            <>
+              <div className="modal-head">
+                <div className="row" style={{ marginBottom: 4 }}>
+                  <span className="tiny">Step 2 / {totalSteps}</span>
+                  <span className="tiny" style={{ marginLeft: 'auto', color: 'var(--ai)' }}>✸ AI 자동 생성</span>
+                </div>
+                <h2>AI 분석 중</h2>
+              </div>
+              <div className="modal-body">
+                <div className="ai-loading">
+                  <div className="spin-lg" />
+                  <div className="ai-loading-title">✸ AI가 작업을 할당하고 있습니다</div>
+                  <div className="ai-loading-sub">목표 분석 · 작업 분해 · 담당자 배정 · 일정 산정</div>
+                  <div className="ai-loading-bar" />
+                  <div className="ai-loading-warn">⚠ 페이지를 이탈하면 프로젝트가 저장되지 않습니다.</div>
+                </div>
+              </div>
+            </>
+          ) : (
+          <>
           <div className="modal-head">
             <div className="row" style={{ marginBottom: 4 }}>
               <span className="tiny">Step {step} / {totalSteps}</span>
@@ -253,6 +276,8 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
               </button>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
     )
@@ -262,7 +287,7 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
   const totalManualSteps = 2
   return (
     <div className="modal-bg" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: step === 2 ? 640 : 480 }}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: step === 2 ? 820 : 480 }}>
         <div className="modal-head">
           <div className="row" style={{ marginBottom: 4 }}>
             <span className="tiny">Step {step} / {totalManualSteps}</span>
