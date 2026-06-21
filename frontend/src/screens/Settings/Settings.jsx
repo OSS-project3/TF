@@ -58,8 +58,30 @@ export default function Settings({ onDeleted }) {
 
   async function copyInvite() {
     if (!inviteLink) return
-    try { await navigator.clipboard.writeText(inviteLink); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 2000) }
-    catch { alert('클립보드 복사에 실패했습니다.') }
+    let copied = false
+
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(inviteLink); copied = true } catch { /* fall through */ }
+    }
+
+    if (!copied) {
+      try {
+        const el = document.createElement('textarea')
+        el.value = inviteLink
+        el.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;box-shadow:none;background:transparent;opacity:0'
+        document.body.appendChild(el)
+        el.focus(); el.select()
+        copied = document.execCommand('copy')
+        document.body.removeChild(el)
+      } catch { /* ignore */ }
+    }
+
+    if (copied) {
+      setInviteCopied(true)
+      setTimeout(() => setInviteCopied(false), 2000)
+    } else {
+      alert('클립보드 복사에 실패했습니다.')
+    }
   }
 
   async function deleteAccount() {
