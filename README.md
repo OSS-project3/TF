@@ -182,4 +182,3 @@ npm run dev
 
 - 프론트엔드 상세: [`frontend/README.md`](frontend/README.md)
 - 백엔드 상세/아키텍처: [`backend/CLAUDE.md`](backend/CLAUDE.md)
-- API 명세: Swagger UI (`/swagger-ui.html`)
