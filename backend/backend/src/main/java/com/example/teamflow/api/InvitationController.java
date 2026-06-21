@@ -55,12 +55,10 @@ public class InvitationController {
         return ResponseEntity.ok(ApiResponse.success(authService.acceptInvitation(body.get("token"), memberId)));
     }
 
-    @Operation(summary = "이메일로 팀원 초대 [PM 전용]",
+    @Operation(summary = "이메일로 팀원 초대",
             description = "팀원의 계정 이메일을 입력하면 해당 사용자의 계정에 워크스페이스 참가 요청(PENDING)이 생성됩니다. 대상 멤버는 `GET /invitations/received`로 요청을 확인하고 수락/거절할 수 있습니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "초대 요청 생성 성공")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "FORBIDDEN — PM 역할 아님")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "MEMBER_NOT_FOUND — 해당 이메일의 계정 없음")
-    @PreAuthorize("hasRole('PM')")
     @PostMapping("/email")
     public ResponseEntity<ApiResponse<Void>> inviteByEmail(
             @AuthenticationPrincipal Long memberId,
