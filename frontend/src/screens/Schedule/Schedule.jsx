@@ -75,7 +75,7 @@ export default function Schedule({ projects, members, role, currentUser }) {
     const startDay = t.startDate ? dayOf(t.startDate) : 0
     const endDay = t.endDate ? dayOf(t.endDate) : startDay + Math.max(2, Math.round(t.hours / 4))
     return {
-      id: t.id, title: t.title, owner: t.assigneeId ?? '', startDay, endDay: Math.max(endDay, startDay + 1),
+      id: t.id, title: t.title, owner: t.assigneeIds?.[0] ?? '', startDay, endDay: Math.max(endDay, startDay + 1),
       kind: t.critical ? 'ai' : t.lateRisk ? 'late' : '', done: t.status === 'DONE', phase: t.phase,
     }
   }), [tasks, range])

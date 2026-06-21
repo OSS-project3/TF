@@ -42,8 +42,8 @@ public class TaskService {
     @Transactional
     public TaskCreateResponse createTask(Long projectId, TaskCreateRequest request) {
         projectService.findById(projectId);
-        if (request.assigneeId() != null) {
-            memberService.findById(request.assigneeId());
+        if (request.assigneeIds() != null) {
+            request.assigneeIds().forEach(memberService::findById);
         }
 
         Task task = Task.create(
@@ -52,7 +52,7 @@ public class TaskService {
                 request.phase(),
                 request.estimatedHours() != null ? request.estimatedHours() : 0,
                 request.difficulty(),
-                request.assigneeId(),
+                request.assigneeIds(),
                 request.startDate(),
                 request.endDate()
         );
@@ -78,6 +78,10 @@ public class TaskService {
         task.updateEstimatedHours(request.estimatedHours());
         task.updateDifficulty(request.difficulty());
         task.updateDates(request.startDate(), request.endDate());
+        if (request.assigneeIds() != null) {
+            request.assigneeIds().forEach(memberService::findById);
+            task.updateAssignees(request.assigneeIds());
+        }
         task.updateFlags(request.isCriticalPath(), request.isLateRisk());
         if (request.gitBranch() != null) task.linkGitBranch(request.gitBranch().isBlank() ? null : request.gitBranch());
         List<Long> deps = getDependencyIds(taskId);
@@ -94,10 +98,10 @@ public class TaskService {
     }
 
     @Transactional
-    public void changeAssignee(Long taskId, Long memberId) {
+    public void changeAssignee(Long taskId, List<Long> memberIds) {
         Task task = findById(taskId);
-        memberService.findById(memberId);
-        task.assignTo(memberId);
+        memberIds.forEach(memberService::findById);
+        task.updateAssignees(memberIds);
     }
 
     @Transactional(readOnly = true)

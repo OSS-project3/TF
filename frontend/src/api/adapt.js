@@ -40,7 +40,7 @@ export const adaptTask = (t) => ({
   deps: (t.dependencyTaskIds ?? []).map(String),
   // 실데이터 연동용 추가 필드
   status: t.status,                              // TODO|IN_PROGRESS|DONE|BLOCKED
-  assigneeId: t.assigneeId != null ? String(t.assigneeId) : null,
+  assigneeIds: (t.assigneeIds ?? []).map(String),
   startDate: t.startDate ?? null,
   endDate: t.endDate ?? null,
   critical: !!t.isCriticalPath,

@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "task")
@@ -23,8 +25,10 @@ public class Task extends BaseTimeEntity {
     @Column(name = "project_id", nullable = false)
     private Long projectId;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "task_assignee", joinColumns = @JoinColumn(name = "task_id"))
     @Column(name = "assignee_id")
-    private Long assigneeId;
+    private List<Long> assigneeIds = new ArrayList<>();
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -60,14 +64,14 @@ public class Task extends BaseTimeEntity {
 
     public static Task create(Long projectId, String title, String phase,
                               int estimatedHours, TaskDifficulty difficulty,
-                              Long assigneeId, LocalDate startDate, LocalDate endDate) {
+                              List<Long> assigneeIds, LocalDate startDate, LocalDate endDate) {
         Task task = new Task();
         task.projectId = projectId;
         task.title = title;
         task.phase = phase;
         task.estimatedHours = estimatedHours;
         task.difficulty = difficulty;
-        task.assigneeId = assigneeId;
+        if (assigneeIds != null) task.assigneeIds.addAll(assigneeIds);
         task.startDate = startDate;
         task.endDate = endDate;
         task.status = TaskStatus.TODO;
@@ -80,8 +84,11 @@ public class Task extends BaseTimeEntity {
         this.status = newStatus;
     }
 
-    public void assignTo(Long memberId) {
-        this.assigneeId = memberId;
+    public void updateAssignees(List<Long> memberIds) {
+        if (memberIds != null) {
+            this.assigneeIds.clear();
+            this.assigneeIds.addAll(memberIds);
+        }
     }
 
     public void updateTitle(String title) {

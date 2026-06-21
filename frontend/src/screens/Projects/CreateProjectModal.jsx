@@ -10,7 +10,7 @@ const todayStr = () => new Date().toISOString().slice(0, 10)
 const maxDateStr = () => new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString().slice(0, 10)
 
 function emptyTask(members) {
-  return { _key: Math.random(), title: '', phase: '개발', startDate: '', endDate: '', difficulty: 'MEDIUM', assigneeId: members[0]?.id ?? null, estimatedHours: '' }
+  return { _key: Math.random(), title: '', phase: '개발', startDate: '', endDate: '', difficulty: 'MEDIUM', assigneeIds: members[0]?.id ? [members[0].id] : [], estimatedHours: '' }
 }
 
 const inputSt = { fontSize: 11, padding: '4px 4px', border: '1px solid var(--line)', borderRadius: 4, background: 'var(--surface)' }
@@ -38,6 +38,25 @@ function buildProjectContext(contextMode, completedParts, customContext) {
   return ''
 }
 
+function AssigneePicker({ assigneeIds, members, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>
+      {members.map(m => {
+        const sel = (assigneeIds ?? []).includes(m.id)
+        return (
+          <button key={m.id} type="button" title={m.name}
+            onClick={() => onChange(sel ? (assigneeIds ?? []).filter(x => x !== m.id) : [...(assigneeIds ?? []), m.id])}
+            style={{ border: `2px solid ${sel ? 'var(--ai)' : 'var(--line)'}`, borderRadius: '50%', padding: 0, background: 'none', cursor: 'pointer', lineHeight: 0 }}>
+            <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--surface-2, #e8e8e8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
+              {m.init ?? m.name?.[0] ?? '?'}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function TaskEditor({ tasks, setTasks, members }) {
   function update(key, field, value) {
     setTasks(prev => prev.map(t => t._key === key ? { ...t, [field]: value } : t))
@@ -46,7 +65,7 @@ function TaskEditor({ tasks, setTasks, members }) {
   return (
     <div style={{ overflowX: 'auto' }}>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 660 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 96px 96px 84px 96px 48px 24px', gap: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 68px 96px 96px 84px auto 48px 24px', gap: 4 }}>
         <span className="tiny muted" style={{ fontSize: 10 }}>제목</span>
         <span className="tiny muted" style={{ fontSize: 10 }}>단계</span>
         <span className="tiny muted" style={{ fontSize: 10 }}>시작일</span>
@@ -57,7 +76,7 @@ function TaskEditor({ tasks, setTasks, members }) {
         <span />
       </div>
       {tasks.map(t => (
-        <div key={t._key} style={{ display: 'grid', gridTemplateColumns: '1fr 68px 96px 96px 84px 96px 48px 24px', gap: 4, alignItems: 'center' }}>
+        <div key={t._key} style={{ display: 'grid', gridTemplateColumns: '1fr 68px 96px 96px 84px auto 48px 24px', gap: 4, alignItems: 'center' }}>
           <input value={t.title} onChange={e => update(t._key, 'title', e.target.value)} placeholder="작업 제목" style={{ ...inputSt, fontSize: 12 }} />
           <select value={t.phase} onChange={e => update(t._key, 'phase', e.target.value)} style={inputSt}>
             {PHASES.map(p => <option key={p}>{p}</option>)}
@@ -67,10 +86,11 @@ function TaskEditor({ tasks, setTasks, members }) {
           <select value={t.difficulty} onChange={e => update(t._key, 'difficulty', e.target.value)} style={inputSt}>
             {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
           </select>
-          <select value={t.assigneeId ?? ''} onChange={e => update(t._key, 'assigneeId', e.target.value ? Number(e.target.value) : null)} style={inputSt}>
-            <option value="">미배정</option>
-            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
+          <AssigneePicker
+            assigneeIds={t.assigneeIds ?? []}
+            members={members}
+            onChange={ids => update(t._key, 'assigneeIds', ids)}
+          />
           <input type="number" min={1} max={999} value={t.estimatedHours} onChange={e => update(t._key, 'estimatedHours', e.target.value)} placeholder="-" style={{ ...inputSt, textAlign: 'right' }} />
           <button onClick={() => setTasks(prev => prev.filter(x => x._key !== t._key))} style={{ border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>×</button>
         </div>
@@ -140,7 +160,7 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
         startDate: t.startDate || '',
         endDate: t.endDate || '',
         difficulty: String(t.difficulty || 'MEDIUM').toUpperCase(),
-        assigneeId: ids[i % ids.length] ?? null,
+        assigneeIds: ids[i % ids.length] != null ? [String(ids[i % ids.length])] : [],
         estimatedHours: t.estimatedHours > 0 ? String(t.estimatedHours) : '',
       }))
       setTasks(aiTasks.length > 0 ? aiTasks : [emptyTask(selectedMembers)])

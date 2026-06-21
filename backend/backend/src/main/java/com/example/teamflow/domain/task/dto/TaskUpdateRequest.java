@@ -4,6 +4,7 @@ import com.example.teamflow.common.enums.TaskDifficulty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Schema(description = "태스크 수정 요청 — 모든 필드 선택적, null은 수정하지 않음")
 public record TaskUpdateRequest(
@@ -13,6 +14,7 @@ public record TaskUpdateRequest(
         @Schema(description = "새 난이도", allowableValues = {"EASY", "MEDIUM", "HARD"}) TaskDifficulty difficulty,
         @Schema(description = "새 시작일 (yyyy-MM-dd)", example = "2026-06-15") LocalDate startDate,
         @Schema(description = "새 마감일 (yyyy-MM-dd)", example = "2026-06-25") LocalDate endDate,
+        @Schema(description = "담당자 멤버 ID 목록 (null이면 변경 안 함, 빈 배열이면 전체 해제)", example = "[2, 3]") List<Long> assigneeIds,
         @Schema(description = "크리티컬 패스 여부") Boolean isCriticalPath,
         @Schema(description = "지연 위험 여부") Boolean isLateRisk,
         @Schema(description = "연동할 GitHub 브랜치명 (머지 시 자동 완료)", example = "feat/user-crud") String gitBranch

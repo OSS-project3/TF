@@ -119,7 +119,7 @@ public class TaskController {
             @Parameter(description = "태스크 ID", required = true, example = "10")
             @PathVariable Long taskId,
             @Valid @RequestBody TaskAssigneeUpdateRequest request) {
-        taskService.changeAssignee(taskId, request.assigneeId());
+        taskService.changeAssignee(taskId, request.assigneeIds());
         return ResponseEntity.ok(ApiResponse.success());
     }
 

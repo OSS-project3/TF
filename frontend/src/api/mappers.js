@@ -67,13 +67,14 @@ const priorityFromTask = (task) => {
  * @param {Map<number, object>} [memberMap] memberId -> Member (담당자 이름 해석용)
  */
 export const mapTask = (task, memberMap) => {
-  const assignee = task.assigneeId != null ? memberMap?.get(task.assigneeId) : null
+  const firstId = (task.assigneeIds ?? [])[0]
+  const assignee = firstId != null ? memberMap?.get(firstId) : null
   return {
     id: task.id,
     projectId: task.projectId,
     title: task.title,
     assignee: assignee?.name ?? '미배정',
-    assigneeId: task.assigneeId ?? null,
+    assigneeIds: task.assigneeIds ?? [],
     status: toDisplayStatus(task.status),
     priority: priorityFromTask(task),
     category: task.phase,

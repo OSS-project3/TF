@@ -118,12 +118,13 @@ public class AiProjectFacade {
                     assigneeId = memberIds.get(robin.getAndIncrement() % memberIds.size());
                 }
                 if (assigneeId != null) autoMemberIds.add(assigneeId);
+                List<Long> assigneeIds = assigneeId != null ? List.of(assigneeId) : List.of();
                 taskService.createTask(projectId, new TaskCreateRequest(
                         proposal.title(),
                         proposal.phase(),
                         proposal.estimatedHours(),
                         parseDifficulty(proposal.difficulty()),
-                        assigneeId,
+                        assigneeIds,
                         parseDate(proposal.startDate()),
                         parseDate(proposal.endDate()),
                         null, null

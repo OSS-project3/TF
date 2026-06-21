@@ -111,8 +111,9 @@ public class DataSeeder implements CommandLineRunner {
     private void task(Long projectId, String title, String phase, int hours, TaskDifficulty difficulty,
                       Long assigneeId, int startOffsetDays, int endOffsetDays, TaskStatus status) {
         LocalDate base = LocalDate.now();
+        List<Long> assigneeIds = assigneeId != null ? List.of(assigneeId) : List.of();
         Long taskId = taskService.createTask(projectId, new TaskCreateRequest(
-                title, phase, hours, difficulty, assigneeId,
+                title, phase, hours, difficulty, assigneeIds,
                 base.plusDays(startOffsetDays), base.plusDays(endOffsetDays), null, null
         )).id();
         if (status != TaskStatus.TODO) {

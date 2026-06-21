@@ -82,7 +82,7 @@ export default function Workspace() {
         phase: t.phase || '개발',
         estimatedHours: Number(t.estimatedHours) > 0 ? Number(t.estimatedHours) : null,
         difficulty: String(t.difficulty || 'MEDIUM').toUpperCase(),
-        assigneeId: t.assigneeId ? Number(t.assigneeId) : null,
+        assigneeIds: (t.assigneeIds ?? []).map(Number),
         startDate: t.startDate || null,
         endDate: t.endDate || null,
       }).catch(() => {})

@@ -11,8 +11,8 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId " +
-           "AND (:assigneeId IS NULL OR t.assigneeId = :assigneeId) " +
+    @Query("SELECT DISTINCT t FROM Task t LEFT JOIN t.assigneeIds a WHERE t.projectId = :projectId " +
+           "AND (:assigneeId IS NULL OR a = :assigneeId) " +
            "AND (:status IS NULL OR t.status = :status) " +
            "AND (:phase IS NULL OR t.phase = :phase)")
     List<Task> findByProjectIdWithFilters(
@@ -29,38 +29,32 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
            "AND t.endDate < :today AND t.status <> 'DONE'")
     int countLate(@Param("projectId") Long projectId, @Param("today") LocalDate today);
 
-    @Query("SELECT t FROM Task t WHERE t.assigneeId = :memberId " +
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assigneeIds a WHERE a = :memberId " +
            "AND (:status IS NULL OR t.status = :status)")
     List<Task> findByAssigneeId(@Param("memberId") Long memberId,
                                 @Param("status") TaskStatus status);
 
-    @Query("SELECT t FROM Task t WHERE t.assigneeId = :memberId " +
+    @Query("SELECT DISTINCT t FROM Task t JOIN t.assigneeIds a WHERE a = :memberId " +
            "AND t.startDate <= :to AND t.endDate >= :from")
     List<Task> findByAssigneeAndDateRange(@Param("memberId") Long memberId,
                                           @Param("from") LocalDate from,
                                           @Param("to") LocalDate to);
 
-    // 지연 태스크 목록 (endDate < today && status != DONE)
     @Query("SELECT t FROM Task t WHERE t.projectId = :projectId " +
            "AND t.endDate < :today AND t.status <> 'DONE'")
     List<Task> findLateByProjectId(@Param("projectId") Long projectId,
                                    @Param("today") LocalDate today);
 
-    // BLOCKED 태스크 목록
     @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = 'BLOCKED'")
     List<Task> findBlockedByProjectId(@Param("projectId") Long projectId);
 
-    // IN_PROGRESS 태스크 목록
     @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = 'IN_PROGRESS'")
     List<Task> findInProgressByProjectId(@Param("projectId") Long projectId);
 
-    // 담당자별 IN_PROGRESS 태스크 수
-    @Query("SELECT t.assigneeId, COUNT(t) FROM Task t WHERE t.projectId = :projectId " +
-           "AND t.status = 'IN_PROGRESS' AND t.assigneeId IS NOT NULL " +
-           "GROUP BY t.assigneeId")
+    @Query("SELECT a, COUNT(t) FROM Task t JOIN t.assigneeIds a WHERE t.projectId = :projectId " +
+           "AND t.status = 'IN_PROGRESS' GROUP BY a")
     List<Object[]> countInProgressByAssignee(@Param("projectId") Long projectId);
 
-    // GitHub 웹훅 — 브랜치명 일치 + 미완료 태스크
     @Query("SELECT t FROM Task t WHERE t.gitBranch = :gitBranch AND t.status <> 'DONE'")
     List<Task> findByGitBranchAndNotDone(@Param("gitBranch") String gitBranch);
 }
