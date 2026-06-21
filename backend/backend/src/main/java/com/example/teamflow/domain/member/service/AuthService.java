@@ -38,8 +38,11 @@ public class AuthService {
         }
 
         // 임시로 workspaceId 없이 저장한 뒤, workspaceId 결정 후 갱신
+        String initial = (req.initial() != null && !req.initial().isBlank())
+                ? req.initial()
+                : req.name().substring(0, Math.min(2, req.name().length()));
         Member member = Member.create(
-                req.name(), req.role(), req.initial(),
+                req.name(), req.role(), initial,
                 req.weeklyCapacityHours(), req.email(),
                 passwordEncoder.encode(req.password()),
                 null);

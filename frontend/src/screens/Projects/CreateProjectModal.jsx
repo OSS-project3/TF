@@ -15,6 +15,29 @@ function emptyTask(members) {
 
 const inputSt = { fontSize: 11, padding: '4px 4px', border: '1px solid var(--line)', borderRadius: 4, background: 'var(--surface)' }
 
+const CONTEXT_PARTS = [
+  { key: 'erd', label: 'ERD / DB 스키마' },
+  { key: 'frontend', label: '프론트엔드(UI/화면)' },
+  { key: 'backend', label: '백엔드 API 일부' },
+]
+
+function buildProjectContext(contextMode, completedParts, customContext) {
+  if (contextMode === 'scratch')
+    return 'ERD·프론트엔드·백엔드 모두 미구현. 기획부터 설계·개발·테스트·배포까지 전체 개발이 필요.'
+  if (contextMode === 'partial') {
+    const done = CONTEXT_PARTS.filter(p => completedParts.includes(p.key)).map(p => p.label)
+    const needed = CONTEXT_PARTS.filter(p => !completedParts.includes(p.key)).map(p => p.label)
+    const backendOnly = completedParts.includes('frontend') && !completedParts.includes('backend')
+    return [
+      `완료된 항목: ${done.length > 0 ? done.join(', ') : '없음'}.`,
+      `개발 필요: ${needed.length > 0 ? needed.join(', ') : '없음'}.`,
+      backendOnly ? '프론트엔드가 완료되어 있으므로 백엔드 구현에 집중하세요.' : '',
+    ].filter(Boolean).join(' ')
+  }
+  if (contextMode === 'custom') return customContext.trim()
+  return ''
+}
+
 function TaskEditor({ tasks, setTasks, members }) {
   function update(key, field, value) {
     setTasks(prev => prev.map(t => t._key === key ? { ...t, [field]: value } : t))
@@ -58,6 +81,12 @@ function TaskEditor({ tasks, setTasks, members }) {
   )
 }
 
+const cardSt = (active) => ({
+  textAlign: 'left', cursor: 'pointer', padding: '12px 14px', background: 'none', borderRadius: 8,
+  border: `2px solid ${active ? 'var(--accent, #4f8ef7)' : 'var(--line)'}`,
+  color: 'inherit', width: '100%',
+})
+
 export default function CreateProjectModal({ members, currentUser, onClose, onCreate }) {
   const [mode, setMode] = useState(null) // null | 'ai' | 'manual'
   const [step, setStep] = useState(1)
@@ -67,6 +96,11 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
   const [goal, setGoal] = useState('')
   const [deadline, setDeadline] = useState('')
   const [selected, setSelected] = useState(currentUser ? [currentUser.id] : [])
+
+  // Step 3: 현재 구현 현황
+  const [contextMode, setContextMode] = useState(null) // 'scratch' | 'partial' | 'custom'
+  const [completedParts, setCompletedParts] = useState([])
+  const [customContext, setCustomContext] = useState('')
 
   // 태스크 목록 (AI 미리보기 or 직접 입력)
   const [tasks, setTasks] = useState([])
@@ -85,15 +119,20 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
   const today = todayStr()
   const maxDate = maxDateStr()
   const toggle = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+  const togglePart = (key) => setCompletedParts(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key])
 
-  // 선택된 멤버 객체만 (task assignee picker에 사용)
   const selectedMembers = members.filter(m => selected.includes(m.id))
+
+  const contextReady = contextMode === 'scratch'
+    || contextMode === 'partial'
+    || (contextMode === 'custom' && customContext.trim().length > 0)
 
   async function runAi() {
     setAiLoading(true); setAiError('')
     try {
       const ids = Array.from(new Set([...selected.map(Number), Number(currentUser?.id)]))
-      const res = await aiApi.decompose({ goal, deadline, memberIds: ids })
+      const projectContext = buildProjectContext(contextMode, completedParts, customContext)
+      const res = await aiApi.decompose({ goal, deadline, memberIds: ids, projectContext: projectContext || undefined })
       const aiTasks = (res.tasks || []).map((t, i) => ({
         _key: Math.random(),
         title: t.title || '',
@@ -105,11 +144,11 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
         estimatedHours: t.estimatedHours > 0 ? String(t.estimatedHours) : '',
       }))
       setTasks(aiTasks.length > 0 ? aiTasks : [emptyTask(selectedMembers)])
-      setStep(3)
+      setStep(4)
     } catch {
       setAiError('AI 분석에 실패했습니다. 수동으로 작업을 추가하거나 다시 시도하세요.')
       setTasks([emptyTask(selectedMembers)])
-      setStep(3)
+      setStep(4)
     } finally {
       setAiLoading(false)
     }
@@ -165,15 +204,15 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
 
   // ─── AI 모드 ───
   if (mode === 'ai') {
-    const totalSteps = 3
+    const totalSteps = 4
     return (
       <div className="modal-bg" onClick={aiLoading ? undefined : onClose}>
-        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: aiLoading ? 460 : (step === 3 ? 820 : 480) }}>
+        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: aiLoading ? 460 : (step === 4 ? 820 : 480) }}>
           {aiLoading ? (
             <>
               <div className="modal-head">
                 <div className="row" style={{ marginBottom: 4 }}>
-                  <span className="tiny">Step 2 / {totalSteps}</span>
+                  <span className="tiny">Step 3 / {totalSteps}</span>
                   <span className="tiny" style={{ marginLeft: 'auto', color: 'var(--ai)' }}>✸ AI 자동 생성</span>
                 </div>
                 <h2>AI 분석 중</h2>
@@ -196,11 +235,12 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
               <span className="tiny" style={{ marginLeft: 'auto', color: 'var(--ai)' }}>✸ AI 자동 생성</span>
             </div>
             <h2>
-              {step === 1 ? '프로젝트 정보' : step === 2 ? '팀원 선택' : 'AI 작업 미리보기'}
+              {step === 1 ? '프로젝트 정보' : step === 2 ? '팀원 선택' : step === 3 ? '현재 구현 현황' : 'AI 작업 미리보기'}
             </h2>
             <p>
               {step === 1 ? '목표를 자세히 적을수록 AI가 정확하게 분해해요.' :
                step === 2 ? 'AI가 능력과 가용 시간을 보고 자동으로 배정합니다.' :
+               step === 3 ? 'AI가 알맞은 단계와 일정을 생성하는 데 필요합니다.' :
                'AI가 생성한 작업 및 일정입니다. 저장 전 직접 수정하거나 추가·삭제할 수 있습니다.'}
             </p>
           </div>
@@ -242,11 +282,55 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
                   <span className="glyph">AI</span>
                   <div><strong>{selected.length}명</strong> 선택됨. AI가 목표를 분석해 작업으로 분해합니다.</div>
                 </div>
-                {aiError && <div className="ai-assist" style={{ color: 'var(--bad)', marginTop: 4 }}><span className="glyph">!</span>{aiError}</div>}
               </>
             )}
 
             {step === 3 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button style={cardSt(contextMode === 'scratch')} onClick={() => setContextMode('scratch')}>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>처음부터 시작</div>
+                  <div className="muted" style={{ fontSize: 12 }}>ERD, 프론트엔드, 백엔드 모두 없음 — 기획부터 전체 개발 필요</div>
+                </button>
+
+                <button style={cardSt(contextMode === 'partial')} onClick={() => setContextMode('partial')}>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>일부 구현됨</div>
+                  <div className="muted" style={{ fontSize: 12 }}>이미 완료된 항목이 있음 — 아래에서 선택</div>
+                </button>
+                {contextMode === 'partial' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 14px', background: 'var(--surface)', borderRadius: 6, border: '1px solid var(--line)' }}>
+                    <div className="muted" style={{ fontSize: 11, marginBottom: 2 }}>완료된 항목 (해당되는 것 모두 선택)</div>
+                    {CONTEXT_PARTS.map(p => (
+                      <label key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                        <input
+                          type="checkbox"
+                          checked={completedParts.includes(p.key)}
+                          onChange={() => togglePart(p.key)}
+                          style={{ accentColor: 'var(--accent, #4f8ef7)', width: 15, height: 15 }}
+                        />
+                        {p.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                <button style={cardSt(contextMode === 'custom')} onClick={() => setContextMode('custom')}>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>직접 입력</div>
+                  <div className="muted" style={{ fontSize: 12 }}>현재 구현 상황을 자유롭게 설명</div>
+                </button>
+                {contextMode === 'custom' && (
+                  <textarea
+                    value={customContext}
+                    onChange={e => setCustomContext(e.target.value)}
+                    placeholder="예) 프론트엔드 완료, ERD 설계됨. 결제 관련 백엔드 API만 구현 필요."
+                    style={{ fontSize: 13, padding: '8px 10px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--surface)', minHeight: 72, resize: 'vertical' }}
+                  />
+                )}
+
+                {aiError && <div className="ai-assist" style={{ color: 'var(--bad)' }}><span className="glyph">!</span>{aiError}</div>}
+              </div>
+            )}
+
+            {step === 4 && (
               <>
                 <div className="ai-assist" style={{ marginBottom: 12 }}>
                   <span className="glyph">AI</span>
@@ -266,11 +350,14 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
               <button className="btn btn-primary" onClick={() => setStep(2)} disabled={!name || !goal || !deadline}>다음 →</button>
             )}
             {step === 2 && (
-              <button className="btn btn-primary" onClick={runAi} disabled={aiLoading || selected.length === 0}>
+              <button className="btn btn-primary" onClick={() => setStep(3)} disabled={selected.length === 0}>다음 →</button>
+            )}
+            {step === 3 && (
+              <button className="btn btn-primary" onClick={runAi} disabled={!contextReady || aiLoading}>
                 {aiLoading ? 'AI 분석 중…' : '✸ AI로 분석 →'}
               </button>
             )}
-            {step === 3 && (
+            {step === 4 && (
               <button className="btn btn-primary" onClick={save} disabled={saving || tasks.some(t => !t.title.trim())}>
                 {saving ? '저장 중…' : '프로젝트 저장'}
               </button>

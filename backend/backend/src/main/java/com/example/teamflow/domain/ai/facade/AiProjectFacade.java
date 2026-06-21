@@ -123,7 +123,9 @@ public class AiProjectFacade {
                         proposal.estimatedHours(),
                         parseDifficulty(proposal.difficulty()),
                         assigneeId,
-                        null, null, null, null
+                        parseDate(proposal.startDate()),
+                        parseDate(proposal.endDate()),
+                        null, null
                 ));
             }
 
@@ -161,6 +163,14 @@ public class AiProjectFacade {
             return TaskDifficulty.valueOf(value.toUpperCase());
         } catch (Exception e) {
             return TaskDifficulty.MEDIUM;
+        }
+    }
+
+    private LocalDate parseDate(String value) {
+        try {
+            return (value != null && !value.isBlank()) ? LocalDate.parse(value) : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 }

@@ -105,8 +105,11 @@ public class AiController {
             @Valid @RequestBody AiDecomposeRequest request) {
         java.time.LocalDate deadline = (request.deadline() != null && !request.deadline().isBlank())
                 ? java.time.LocalDate.parse(request.deadline()) : null;
+        java.util.Map<String, Object> context = (request.projectContext() != null && !request.projectContext().isBlank())
+                ? java.util.Map.of("현재 구현 현황", request.projectContext())
+                : java.util.Map.of();
         TaskDecomposeAgent.DecomposeResult result =
-                taskDecomposeAgent.decompose(request.goal(), java.util.Map.of(),
+                taskDecomposeAgent.decompose(request.goal(), context,
                         java.time.LocalDate.now(), deadline).data();
         java.util.List<AiDecomposeResponse.TaskItem> tasks = result.tasks().stream()
                 .map(t -> new AiDecomposeResponse.TaskItem(
