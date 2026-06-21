@@ -51,14 +51,14 @@ docker compose down
 
 ### 첫 계정 만들기
 
-현재 시드 데이터는 사용하지 않습니다. 첫 실행 후 회원가입 화면에서 역할을 `PM`으로 선택하면 프로젝트 생성, 팀원 초대, PM 대시보드 등 관리자 기능을 사용할 수 있습니다.
+첫 실행 후 회원가입 화면에서 역할을 `PM`으로 선택하면 프로젝트 생성, 팀원 초대, PM 대시보드 등 관리자 기능을 사용할 수 있습니다.
 
-> Docker는 H2 인메모리 DB를 사용하므로 `docker compose down` 후 다시 올리면 데이터가 초기화됩니다.
+> Docker는 **PostgreSQL**을 사용하며 데이터는 `postgres_data` 볼륨에 영속 저장됩니다. `docker compose down -v` 로 볼륨까지 삭제하면 초기화됩니다.
 
 ### AI 기능 (OpenAI)
 
 `.env`의 `OPENAI_API_KEY`를 채우면 **AI 작업 분해**(프로젝트 생성), **AI 회의 요약**, **AI 위험 분석**이 실제 OpenAI로 동작합니다.
-키가 없으면 AI 호출 API는 비활성 상태로 응답하며, 프론트의 일부 생성 흐름은 템플릿 결과로 폴백합니다.
+키가 없으면 자동으로 목(mock) 응답을 반환하여 AI 흐름을 그대로 체험할 수 있습니다.
 
 ```bash
 # .env
@@ -68,8 +68,6 @@ OPENAI_MODEL=gpt-4o-mini   # 선택
 키를 바꾼 뒤에는 백엔드만 재시작: `docker compose up -d --build backend`
 
 > 프론트(nginx)가 `/api` 요청을 백엔드 컨테이너로 프록시하므로 CORS 설정 없이 동작합니다.
-> DB는 **임베디드 H2(인메모리)** 라 컨테이너를 내리면 데이터가 초기화됩니다. 첫 실행 시
-> 화면에서 **회원가입(역할 PM)** 으로 계정을 만들면 관리자/프로젝트 생성 권한을 갖습니다.
 
 ## 개별 실행 (도커 없이)
 
@@ -96,7 +94,7 @@ npm run dev
 |------|------|
 | Frontend | React 18, Vite 5, React Router 6, Context API |
 | Backend | Java 17, Spring Boot 3.3, Spring Data JPA, Spring Security(JWT), springdoc(Swagger) |
-| DB | H2(로컬·도커) / PostgreSQL(운영 설정) |
+| DB | H2(로컬) / PostgreSQL(도커·운영) |
 | 빌드/배포 | Gradle, Docker, nginx |
 
 ## 주요 기능
@@ -107,6 +105,7 @@ npm run dev
 - **대시보드** — 개인 워크로드·내 작업, PM용 팀 현황·팀 워크로드
 - **회의록** — AI 요약, TODO 추출, 저장된 회의록 목록 조회, 회의 TODO의 태스크 전환
 - **AI Agent** — 요구사항 질문 생성, 태스크 분해, 담당자 추천, 병목/위험 분석, 회의 요약
+- **AI 실행 내역** — 자동 모니터링·회의 요약 결과를 우측 사이드바에 실시간 표시 (60초 폴링)
 - **워크스페이스/초대** — 워크스페이스 단위 데이터 격리, 초대 링크 생성·수락
 - **설정** — 프로필·비밀번호 변경·회원 탈퇴·팀원 초대
 - **관리자** — 멤버 목록(PM 전용)
@@ -127,10 +126,13 @@ npm run dev
 
 | 변수 | 위치 | 기본값 | 설명 |
 |------|------|--------|------|
-| `OPENAI_API_KEY` | backend (.env) | (빈 값) | OpenAI API 키. 채우면 AI 기능 활성화 |
-| `OPENAI_MODEL` | backend (.env) | `gpt-4o-mini` | 사용할 OpenAI 모델 |
-| `GITHUB_WEBHOOK_SECRET` | backend | (빈 값) | GitHub 웹훅 서명 검증 secret. 미설정 시 검증 생략 |
-| `JWT_SECRET` | backend | 내장 기본값 | JWT 서명 키 (운영 시 반드시 교체) |
+| `OPENAI_API_KEY` | .env | (빈 값) | OpenAI API 키. 미설정 시 목(mock) 응답으로 동작 |
+| `OPENAI_MODEL` | .env | `gpt-4o-mini` | 사용할 OpenAI 모델 |
+| `DB_URL` | docker-compose | `jdbc:postgresql://postgres:5432/teamflow` | PostgreSQL 접속 URL |
+| `DB_USERNAME` | docker-compose | `teamflow` | DB 사용자 |
+| `DB_PASSWORD` | docker-compose | `teamflow1234` | DB 비밀번호 (운영 시 교체) |
+| `GITHUB_WEBHOOK_SECRET` | .env | (빈 값) | GitHub 웹훅 서명 검증 secret. 미설정 시 검증 생략 |
+| `JWT_SECRET` | docker-compose | 내장 기본값 | JWT 서명 키 (운영 시 반드시 교체) |
 | `VITE_API_BASE_URL` | frontend | `/api/v1` | API 베이스 URL (미설정 시 프록시 사용) |
 
 ## 더 보기
