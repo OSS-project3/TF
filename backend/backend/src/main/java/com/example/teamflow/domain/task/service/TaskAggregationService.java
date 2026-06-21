@@ -38,7 +38,7 @@ public class TaskAggregationService {
                 ? taskRepository.findByAssigneeAndDateRange(memberId, from, to)
                 : taskRepository.findByAssigneeId(memberId, null);
         return tasks.stream()
-                .map(t -> new TaskSummary(t.getEstimatedHours(), t.getProjectId()))
+                .map(t -> new TaskSummary(t.getEstimatedHours(), t.getProjectId(), t.getStartDate(), t.getEndDate()))
                 .toList();
     }
 

@@ -1,3 +1,5 @@
 package com.example.teamflow.domain.task.dto;
 
-public record TaskSummary(int estimatedHours, Long projectId) {}
+import java.time.LocalDate;
+
+public record TaskSummary(int estimatedHours, Long projectId, LocalDate startDate, LocalDate endDate) {}

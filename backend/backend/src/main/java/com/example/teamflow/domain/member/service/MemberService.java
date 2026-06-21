@@ -126,7 +126,25 @@ public class MemberService {
 
     private WorkloadResponse computeWorkload(Member member, LocalDate from, LocalDate to) {
         List<TaskSummary> tasks = taskAggregationService.findByAssigneeAndDateRange(member.getId(), from, to);
-        int assignedHours = tasks.stream().mapToInt(TaskSummary::estimatedHours).sum();
+
+        // 날짜 창: 명시적 범위가 없으면 이번 주(월~일) 기준
+        LocalDate windowStart = (from != null) ? from : LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+        LocalDate windowEnd   = (to   != null) ? to   : LocalDate.now().with(java.time.DayOfWeek.SUNDAY);
+        double dailyHours = member.getWeeklyCapacityHours() / 5.0;
+
+        int assignedHours = tasks.stream().mapToInt(t -> {
+            if (t.estimatedHours() > 0) return t.estimatedHours();
+            // estimatedHours == 0 이면 날짜 겹침으로 역산
+            if (t.startDate() != null && t.endDate() != null) {
+                LocalDate overlapStart = t.startDate().isAfter(windowStart) ? t.startDate() : windowStart;
+                LocalDate overlapEnd   = t.endDate().isBefore(windowEnd)   ? t.endDate()   : windowEnd;
+                if (overlapStart.isAfter(overlapEnd)) return 0;
+                long days = java.time.temporal.ChronoUnit.DAYS.between(overlapStart, overlapEnd) + 1;
+                return (int) Math.round(days * dailyHours);
+            }
+            return 0;
+        }).sum();
+
         double loadRate = member.getWeeklyCapacityHours() == 0 ? 0.0
                 : (double) assignedHours / member.getWeeklyCapacityHours();
         int projectCount = (int) tasks.stream().map(TaskSummary::projectId).distinct().count();
