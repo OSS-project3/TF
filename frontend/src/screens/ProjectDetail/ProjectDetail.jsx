@@ -17,14 +17,20 @@ const maxDateStr = () => new Date(new Date().setFullYear(new Date().getFullYear(
 
 function AssigneePicker({ assigneeIds, members, onChange }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
       {members.map(m => {
         const selected = assigneeIds.includes(m.id)
         return (
-          <button key={m.id} type="button" title={m.name}
+          <button key={m.id} type="button"
             onClick={() => onChange(selected ? assigneeIds.filter(x => x !== m.id) : [...assigneeIds, m.id])}
-            style={{ border: `2px solid ${selected ? 'var(--ai)' : 'var(--line)'}`, borderRadius: '50%', padding: 0, background: 'none', cursor: 'pointer', lineHeight: 0 }}>
-            <Avatar member={m} size={20} />
+            style={{
+              fontSize: 11, padding: '2px 7px', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap',
+              border: `1.5px solid ${selected ? 'var(--ai)' : 'var(--line)'}`,
+              background: selected ? 'var(--ai-bg, #eff6ff)' : 'var(--surface)',
+              color: selected ? 'var(--ai)' : 'var(--muted)',
+              fontWeight: selected ? 600 : 400,
+            }}>
+            {m.name}
           </button>
         )
       })}

@@ -40,16 +40,20 @@ function buildProjectContext(contextMode, completedParts, customContext) {
 
 function AssigneePicker({ assigneeIds, members, onChange }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
       {members.map(m => {
         const sel = (assigneeIds ?? []).includes(m.id)
         return (
-          <button key={m.id} type="button" title={m.name}
+          <button key={m.id} type="button"
             onClick={() => onChange(sel ? (assigneeIds ?? []).filter(x => x !== m.id) : [...(assigneeIds ?? []), m.id])}
-            style={{ border: `2px solid ${sel ? 'var(--ai)' : 'var(--line)'}`, borderRadius: '50%', padding: 0, background: 'none', cursor: 'pointer', lineHeight: 0 }}>
-            <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--surface-2, #e8e8e8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
-              {m.init ?? m.name?.[0] ?? '?'}
-            </div>
+            style={{
+              fontSize: 11, padding: '2px 7px', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap',
+              border: `1.5px solid ${sel ? 'var(--ai)' : 'var(--line)'}`,
+              background: sel ? 'var(--ai-bg, #eff6ff)' : 'var(--surface)',
+              color: sel ? 'var(--ai)' : 'var(--muted)',
+              fontWeight: sel ? 600 : 400,
+            }}>
+            {m.name}
           </button>
         )
       })}
