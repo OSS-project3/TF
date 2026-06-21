@@ -3,6 +3,8 @@
 AI가 팀 프로젝트의 일정·업무 분담·회의 정리를 돕는 팀 협업 도구.
 React 프론트엔드와 Spring Boot 백엔드로 구성된 모노레포입니다.
 
+![TeamFlow 대시보드 메인 화면](docs/images/teamflow-main.png)
+
 ## Deployment
 
 서비스 배포 주소
