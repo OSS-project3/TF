@@ -58,7 +58,11 @@ public enum ErrorCode {
 
     // Auth
     UNAUTHORIZED("UNAUTHORIZED", "인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
-    FORBIDDEN("FORBIDDEN", "권한이 없습니다.", HttpStatus.FORBIDDEN);
+    FORBIDDEN("FORBIDDEN", "권한이 없습니다.", HttpStatus.FORBIDDEN),
+
+    // Google OAuth
+    GOOGLE_AUTH_DISABLED("GOOGLE_AUTH_DISABLED", "Google 로그인이 설정되지 않았습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+    GOOGLE_AUTH_INVALID("GOOGLE_AUTH_INVALID", "유효하지 않은 Google 토큰입니다.", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String message;

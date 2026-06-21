@@ -64,7 +64,7 @@ export default function Workspace() {
     name: user?.name ?? '사용자',
     role: user?.role ?? '',
     init: user?.name?.[0] ?? '?',
-    hours: 40,
+    hours: user?.weeklyCapacityHours ?? 40,
     skills: [],
   }
 

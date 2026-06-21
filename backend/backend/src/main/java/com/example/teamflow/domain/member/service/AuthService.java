@@ -2,8 +2,12 @@ package com.example.teamflow.domain.member.service;
 
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
+import com.example.teamflow.common.enums.MemberRole;
 import com.example.teamflow.domain.invitation.service.InvitationService;
 import com.example.teamflow.domain.invitation.service.MemberInviteService;
+import com.example.teamflow.domain.member.dto.GoogleLoginRequest;
+import com.example.teamflow.infra.google.GoogleAuthService;
+import com.example.teamflow.infra.google.GoogleTokenInfo;
 import com.example.teamflow.domain.member.dto.LoginRequest;
 import com.example.teamflow.domain.member.dto.LoginResponse;
 import com.example.teamflow.domain.member.dto.RegisterRequest;
@@ -20,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +38,7 @@ public class AuthService {
     private final WorkspaceService workspaceService;
     private final InvitationService invitationService;
     private final MemberInviteService memberInviteService;
+    private final GoogleAuthService googleAuthService;
 
     @Transactional
     public LoginResponse register(RegisterRequest req) {
@@ -88,6 +95,42 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.setWorkspaceId(workspaceId);
         return new LoginResponse(jwtTokenProvider.generateToken(memberId, member.getRole(), workspaceId));
+    }
+
+    @Transactional
+    public LoginResponse googleLogin(GoogleLoginRequest request) {
+        GoogleTokenInfo info = googleAuthService.verify(request.idToken());
+        String email = info.email();
+        String name = StringUtils.hasText(info.name()) ? info.name()
+                : StringUtils.hasText(info.givenName()) ? info.givenName()
+                : email.split("@")[0];
+
+        Optional<Member> existing = memberRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            Member member = existing.get();
+            return new LoginResponse(jwtTokenProvider.generateToken(
+                    member.getId(), member.getRole(), member.getWorkspaceId()));
+        }
+
+        // 신규 사용자 — Google 계정으로 자동 가입 (역할은 /setup-role에서 선택)
+        String initial = name.substring(0, Math.min(2, name.length()));
+        Member member = Member.create(name, MemberRole.FRONTEND, initial, 40, email,
+                UUID.randomUUID().toString(), null);
+        memberRepository.save(member);
+
+        Long workspaceId;
+        if (StringUtils.hasText(request.inviteToken())) {
+            workspaceId = invitationService.consume(request.inviteToken());
+        } else {
+            Workspace workspace = workspaceService.create(name + "의 워크스페이스", member.getId());
+            workspaceId = workspace.getId();
+        }
+        member.setWorkspaceId(workspaceId);
+        memberInviteService.claimEmailInvitations(email, member.getId(), workspaceId);
+
+        return new LoginResponse(
+                jwtTokenProvider.generateToken(member.getId(), member.getRole(), workspaceId),
+                true);
     }
 
     public void logout(String token) {

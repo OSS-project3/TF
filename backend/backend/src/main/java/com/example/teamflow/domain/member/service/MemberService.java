@@ -75,6 +75,7 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         member.updateProfile(req.name(), req.initial(), req.weeklyCapacityHours());
+        member.updateRole(req.role());
         if (req.skills() != null) {
             member.clearSkills();
             req.skills().forEach(member::addSkill);

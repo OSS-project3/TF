@@ -1,6 +1,7 @@
 package com.example.teamflow.api;
 
 import com.example.teamflow.common.response.ApiResponse;
+import com.example.teamflow.domain.member.dto.GoogleLoginRequest;
 import com.example.teamflow.domain.member.dto.LoginRequest;
 import com.example.teamflow.domain.member.dto.LoginResponse;
 import com.example.teamflow.domain.member.dto.RegisterRequest;
@@ -46,6 +47,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
+    }
+
+    @Operation(summary = "Google 로그인 / 회원가입", description = "Google ID 토큰으로 로그인합니다. 계정이 없으면 자동으로 가입됩니다.")
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(
+            @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.googleLogin(request)));
     }
 
     @Operation(summary = "로그아웃", description = "현재 토큰을 서버 블랙리스트에 등록하여 즉시 무효화합니다. 이후 같은 토큰으로 요청 시 401 반환. 토큰 만료 시점까지 블랙리스트 유지 (서버 재시작 시 초기화).")

@@ -2,10 +2,19 @@ import { useEffect, useState } from 'react'
 import { memberApi, invitationApi, ApiError } from '../../api'
 import { useAuth } from '../../context/AuthContext.jsx'
 
+const SKILL_SUGGESTIONS = [
+  'React', 'Vue', 'TypeScript', 'JavaScript', 'HTML/CSS',
+  'Spring Boot', 'Node.js', 'Django', 'FastAPI', 'Java', 'Python',
+  'MySQL', 'PostgreSQL', 'MongoDB', 'Redis',
+  'Docker', 'AWS', 'Git', 'Figma', 'UI/UX',
+]
+
 export default function Settings({ onDeleted }) {
   const { refreshUser, clearSession } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState({ name: '', initial: '', weeklyCapacityHours: 40, skills: '' })
+  const [profile, setProfile] = useState({ name: '', initial: '', weeklyCapacityHours: 40 })
+  const [skills, setSkills] = useState([])
+  const [skillInput, setSkillInput] = useState('')
   const [profileMsg, setProfileMsg] = useState(null)
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [pwMsg, setPwMsg] = useState(null)
@@ -16,9 +25,23 @@ export default function Settings({ onDeleted }) {
 
   useEffect(() => {
     memberApi.getMe().then(me => {
-      setProfile({ name: me.name ?? '', initial: me.initial ?? '', weeklyCapacityHours: me.weeklyCapacityHours ?? 40, skills: (me.skills ?? []).join(', ') })
+      setProfile({ name: me.name ?? '', initial: me.initial ?? '', weeklyCapacityHours: me.weeklyCapacityHours ?? 40 })
+      setSkills(me.skills ?? [])
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  function toggleSkill(s) {
+    setSkills(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
+  }
+
+  function addCustomSkill(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      const s = skillInput.trim()
+      if (s && !skills.includes(s)) setSkills(prev => [...prev, s])
+      setSkillInput('')
+    }
+  }
 
   async function saveProfile(e) {
     e.preventDefault(); setProfileMsg(null)
@@ -26,7 +49,7 @@ export default function Settings({ onDeleted }) {
       await memberApi.updateMe({
         name: profile.name.trim(), initial: profile.initial.trim(),
         weeklyCapacityHours: Number(profile.weeklyCapacityHours),
-        skills: profile.skills.split(',').map(s => s.trim()).filter(Boolean),
+        skills,
       })
       await refreshUser()
       setProfileMsg({ ok: true, text: '프로필이 저장되었습니다.' })
@@ -103,7 +126,39 @@ export default function Settings({ onDeleted }) {
             <div className="field"><label>이니셜 (최대 2자)</label><input maxLength={2} value={profile.initial} onChange={e => setProfile(p => ({ ...p, initial: e.target.value }))} /></div>
           </div>
           <div className="field"><label>주간 가용 시간 (시간)</label><input type="number" min={1} value={profile.weeklyCapacityHours} onChange={e => setProfile(p => ({ ...p, weeklyCapacityHours: e.target.value }))} /></div>
-          <div className="field"><label>보유 스킬 (쉼표로 구분)</label><input placeholder="React, TypeScript" value={profile.skills} onChange={e => setProfile(p => ({ ...p, skills: e.target.value }))} /></div>
+          <div className="field">
+            <label>보유 스킬</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, marginTop: 4 }}>
+              {SKILL_SUGGESTIONS.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleSkill(s)}
+                  className={'chip' + (skills.includes(s) ? ' active' : '')}
+                  style={{ fontSize: 12 }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="직접 입력 후 Enter (예: Kotlin, Swift)"
+              value={skillInput}
+              onChange={e => setSkillInput(e.target.value)}
+              onKeyDown={addCustomSkill}
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            />
+            {skills.filter(s => !SKILL_SUGGESTIONS.includes(s)).length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                {skills.filter(s => !SKILL_SUGGESTIONS.includes(s)).map(s => (
+                  <span key={s} className="badge" style={{ fontSize: 12, cursor: 'pointer' }} onClick={() => toggleSkill(s)}>
+                    {s} ×
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           {profileMsg && <div className="tiny" style={{ color: profileMsg.ok ? 'var(--ok)' : 'var(--bad)', marginBottom: 8 }}>{profileMsg.ok ? '✓' : '⚠'} {profileMsg.text}</div>}
           <div className="row"><button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto' }}>프로필 저장</button></div>
         </form>

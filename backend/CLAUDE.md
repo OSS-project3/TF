@@ -375,6 +375,44 @@ com.example.teamflow
 - `ProjectDetail.jsx` 인라인 편집: 동일 7컬럼 그리드에 date picker 포함
 - `ProjectDetail.jsx` 태스크 표시: `{t.hours}h` → `~MM/DD` (endDate), hours > 0이면 fallback
 
+### ✅ Phase 7 — Google OAuth 로그인 (2026-06-21)
+
+**백엔드**
+- `infra/google/GoogleTokenInfo.java` — `sub`, `email`, `emailVerified`, `name`, `givenName`, `aud` 파싱 record
+- `infra/google/GoogleAuthService.java` — Google tokeninfo API로 ID 토큰 검증, `clientId` 불일치·미인증 이메일 거부
+- `domain/member/dto/GoogleLoginRequest.java` — `idToken`, `inviteToken`
+- `AuthService.googleLogin()` — 기존 계정이면 JWT 반환, 신규면 자동 가입 + 워크스페이스 생성 + `needsRoleSetup: true` 반환
+- `LoginResponse` — `needsRoleSetup: boolean` 필드 추가 (기존 단일 인자 생성자 호환 유지)
+- `Member.updateRole(MemberRole)` — 역할 변경 메서드 추가
+- `MemberUpdateRequest` — `role: MemberRole` 필드 추가 (null이면 변경 안 함)
+- `MemberService.updateMe()` — `member.updateRole()` 호출 추가
+- `AuthController POST /api/v1/auth/google` — 인증 불필요 (`/api/v1/auth/**` permitAll 포함)
+- `ErrorCode` — `GOOGLE_AUTH_DISABLED` (503), `GOOGLE_AUTH_INVALID` (401) 추가
+- 환경변수: `GOOGLE_CLIENT_ID` (미설정 시 Google 로그인 비활성)
+
+**프론트엔드**
+- `main.jsx` — `<GoogleOAuthProvider clientId={VITE_GOOGLE_CLIENT_ID}>` 래핑
+- `pages/SetupRole/SetupRole.jsx` — 신규 Google 가입 후 역할 선택 화면 (5개 라디오, `PATCH /me { role }` 호출 후 `/` 이동)
+- `App.jsx` — `/setup-role` ProtectedRoute 추가
+- `AuthContext.googleLogin()` — 응답의 `needsRoleSetup` 반환
+- `Login.jsx` / `Signup.jsx` — `needsRoleSetup: true`이면 `/setup-role`로 이동, 초대토큰 연동
+- `api/auth.js googleLogin()` — `POST /auth/google { idToken, inviteToken }`
+
+**환경변수 설정**
+- `TF/.env` — `VITE_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_ID` (Docker Compose에서 백엔드로 전달)
+- `TF/frontend/.env` — `VITE_GOOGLE_CLIENT_ID` (Vite 빌드 타임에 번들에 포함)
+- `TF/frontend/.env`는 `frontend/` 디렉토리 안에 별도로 있어야 함 (Vite는 프로젝트 루트 기준으로 읽음)
+
+**배포 시 주의**
+- Google Cloud Console → OAuth 2.0 클라이언트 → 승인된 JavaScript 원본에 서버 도메인 추가 필요
+- IP 주소는 허용 안 됨 (localhost 제외) → nip.io 등 DNS 서비스 활용 (`http://113-198-66-75.nip.io:13137`)
+- 리디렉션 URI 불필요 (`@react-oauth/google`은 팝업 방식 사용)
+- Google 로그인 후 프론트 재빌드 필수: `cd frontend && npm run build && cd .. && sudo docker compose up --build -d`
+
+**의사결정**
+- 신규 Google 가입 시 역할 고정(`FRONTEND`) 문제 → `/setup-role` 화면으로 분리. 기존 사용자 재로그인에는 영향 없음
+- Client Secret 불필요 — 팝업 방식(GIS)은 프론트에서 ID 토큰만 사용, 백엔드는 tokeninfo API로 검증
+
 ---
 
 ## 의사결정 완료 사항
@@ -390,6 +428,9 @@ com.example.teamflow
 9. **기존 사용자 초대 합류**: `POST /invitations/accept` — 토큰 소비 + `member.workspaceId` 업데이트 + 신규 JWT 발급. 프론트 Login에서 로그인 성공 후 자동 호출
 10. **태스크 삭제 cascade**: `TaskDependency` 양방향(taskId/prerequisiteTaskId) + `TaskExecutionLog` 먼저 삭제 후 태스크 삭제 (외래키 제약 없이 수동 처리)
 11. **estimatedHours 선택 전환**: 일정(startDate/endDate) 기반이 주 입력. hours는 null 허용, 0 저장. UI에서 마지막 컬럼에 선택 입력으로 배치
+12. **Google OAuth 방식**: 팝업(GIS) 방식 채택 — Client Secret 불필요, 리디렉션 URI 불필요. 백엔드는 tokeninfo API로 ID 토큰 검증
+13. **신규 Google 가입 역할 선택**: 자동 가입 시 `needsRoleSetup: true` 반환 → 프론트 `/setup-role` 페이지에서 역할 선택 후 `PATCH /me { role }` 호출
+14. **Vite 환경변수 위치**: `VITE_GOOGLE_CLIENT_ID`는 `TF/frontend/.env`에 별도 관리. `TF/.env`만으로는 Vite 빌드에 반영 안 됨
 
 ---
 

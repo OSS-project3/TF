@@ -1,25 +1,51 @@
 import { useEffect, useState } from 'react'
 import './Team.css'
 import Avatar from '../../ui/Avatar/Avatar'
-import ProgressBar from '../../ui/ProgressBar/ProgressBar'
 import { invitationApi } from '../../api'
 import { useAuth } from '../../context/AuthContext.jsx'
+
+function loadColor(pct) {
+  if (pct > 1.2) return 'var(--bad)'
+  if (pct > 0.85) return 'var(--warn)'
+  return 'var(--ok)'
+}
+
+function LoadBar({ pct }) {
+  const capped = Math.min(pct, 2)
+  const color = loadColor(pct)
+  return (
+    <div style={{ position: 'relative', height: 8, borderRadius: 4, background: 'var(--line)', flex: 1 }}>
+      <div style={{
+        position: 'absolute', left: 0, top: 0, height: '100%',
+        width: `${Math.min(capped / 2, 1) * 100}%`,
+        borderRadius: 4, background: color, transition: 'width 0.3s',
+      }} />
+      {/* 100% 기준선 */}
+      <div style={{
+        position: 'absolute', left: '50%', top: -3, bottom: -3,
+        width: 1.5, background: 'var(--muted)', opacity: 0.4,
+      }} />
+    </div>
+  )
+}
 
 export default function Team({ members, workloads, role, onReload }) {
   const { refreshUser } = useAuth()
   const isMember = role === 'member'
-  // memberId(string) → workload
   const wl = new Map((workloads || []).map(w => [String(w.memberId), w]))
 
-  const highest = [...(workloads || [])].sort((a, b) => (b.loadRate ?? 0) - (a.loadRate ?? 0))[0]
-  const lowest  = [...(workloads || [])].sort((a, b) => (a.loadRate ?? 0) - (b.loadRate ?? 0))[0]
+  const ranked = [...members]
+    .map(m => ({ m, w: wl.get(String(m.id)) }))
+    .sort((a, b) => ((b.w?.loadRate ?? 0) - (a.w?.loadRate ?? 0)))
 
-  // ── 이메일 초대 / 받은 참가 요청 ──
+  const highest = ranked[0]
+  const lowest  = ranked[ranked.length - 1]
+
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteMsg, setInviteMsg] = useState(null)
-  const [inviting, setInviting] = useState(false)
-  const [received, setReceived] = useState([])
-  const [busyId, setBusyId] = useState(null)
+  const [inviteMsg, setInviteMsg]     = useState(null)
+  const [inviting, setInviting]       = useState(false)
+  const [received, setReceived]       = useState([])
+  const [busyId, setBusyId]           = useState(null)
 
   async function loadReceived() {
     try { setReceived(await invitationApi.getReceivedInvitations() ?? []) }
@@ -44,10 +70,10 @@ export default function Team({ members, workloads, role, onReload }) {
   async function acceptInvite(id) {
     setBusyId(id)
     try {
-      await invitationApi.acceptReceivedInvitation(id) // 새 JWT 저장됨
-      await refreshUser()      // 세션(워크스페이스) 갱신
-      await loadReceived()     // 처리된 요청 제거
-      await onReload?.()       // 멤버·프로젝트 등 워크스페이스 데이터 재로딩
+      await invitationApi.acceptReceivedInvitation(id)
+      await refreshUser()
+      await loadReceived()
+      await onReload?.()
     } catch (e) {
       alert(e?.message || '참가 요청 수락에 실패했습니다.')
     } finally { setBusyId(null) }
@@ -72,7 +98,7 @@ export default function Team({ members, workloads, role, onReload }) {
         </div>
       </div>
 
-      {/* 받은 참가 요청 — 모든 사용자에게 표시 */}
+      {/* 받은 참가 요청 */}
       {received.length > 0 && (
         <div className="card" style={{ marginBottom: 20, borderColor: 'var(--ai)' }}>
           <div className="card-head"><h3>받은 참가 요청 <span className="badge ai">{received.length}</span></h3></div>
@@ -91,13 +117,11 @@ export default function Team({ members, workloads, role, onReload }) {
               </div>
             ))}
           </div>
-          <p className="muted tiny" style={{ marginTop: 8 }}>
-            수락하면 현재 워크스페이스에서 해당 워크스페이스로 이동합니다.
-          </p>
+          <p className="muted tiny" style={{ marginTop: 8 }}>수락하면 현재 워크스페이스에서 해당 워크스페이스로 이동합니다.</p>
         </div>
       )}
 
-      {/* 이메일로 팀원 초대 — PM 전용 */}
+      {/* 팀원 초대 — PM 전용 */}
       {!isMember && (
         <form className="card" onSubmit={sendInvite} style={{ marginBottom: 20 }}>
           <div className="card-head"><h3>팀원 초대</h3></div>
@@ -114,9 +138,7 @@ export default function Team({ members, workloads, role, onReload }) {
                 flex: 1, minWidth: 220,
                 border: '1px solid var(--line-strong)',
                 borderRadius: 'var(--radius)',
-                padding: '9px 12px',
-                fontSize: 14,
-                outline: 'none',
+                padding: '9px 12px', fontSize: 14, outline: 'none',
                 transition: 'border-color 0.12s ease',
               }}
               onFocus={e => { e.target.style.borderColor = 'var(--muted-2)' }}
@@ -134,62 +156,97 @@ export default function Team({ members, workloads, role, onReload }) {
         </form>
       )}
 
-      {!isMember && highest && lowest && highest.memberId !== lowest.memberId && (
+      {/* 균형 분석 callout */}
+      {!isMember && highest && lowest && highest.m.id !== lowest.m.id && (
         <div className="card ai-callout" style={{ marginBottom: 20 }}>
-          <div className="row">
+          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
             <span className="badge ai">✸ 균형 분석</span>
-            <div style={{ fontSize: 13 }}>
-              <strong>{highest.memberName}</strong> 님이 {Math.round((highest.loadRate ?? 0) * 100)}% 부하로 가장 높아요.
-              {' '}<strong>{lowest.memberName}</strong> 님은 {Math.round((lowest.loadRate ?? 0) * 100)}%로 여유가 있습니다.
-            </div>
+            <span style={{ fontSize: 13 }}>
+              <strong>{highest.m.name}</strong>
+              <span style={{ color: loadColor(highest.w?.loadRate ?? 0), fontWeight: 600 }}> {Math.round((highest.w?.loadRate ?? 0) * 100)}%</span>
+              {' '}부하로 가장 높고,{' '}
+              <strong>{lowest.m.name}</strong>
+              <span style={{ color: loadColor(lowest.w?.loadRate ?? 0), fontWeight: 600 }}> {Math.round((lowest.w?.loadRate ?? 0) * 100)}%</span>
+              {' '}로 여유가 있어요.
+            </span>
           </div>
         </div>
       )}
 
-      <div className="grid grid-3">
-        {members.map(m => {
-          const w = wl.get(m.id)
-          const pct = w?.loadRate ?? 0
+      {/* 부하 랭킹 리스트 */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {/* 헤더 */}
+        <div className="team-list-header">
+          <span style={{ flex: '0 0 200px' }}>팀원</span>
+          <span style={{ flex: 1 }}>주간 부하 <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>(기준선 = 100%)</span></span>
+          <span style={{ flex: '0 0 52px', textAlign: 'right' }}>부하율</span>
+          <span style={{ flex: '0 0 80px', textAlign: 'right' }}>시간</span>
+          <span style={{ flex: '0 0 60px', textAlign: 'right' }}>작업</span>
+          <span style={{ flex: '0 0 60px', textAlign: 'right' }}>프로젝트</span>
+        </div>
+
+        {ranked.map(({ m, w }, i) => {
+          const pct      = w?.loadRate ?? 0
           const assigned = w?.assignedHours ?? 0
+          const capacity = w?.capacityHours ?? m.hours ?? 40
+          const color   = loadColor(pct)
           return (
-            <div key={m.id} className="card">
-              <div className="row" style={{ marginBottom: 14 }}>
-                <Avatar member={m} size={40} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{m.name}</div>
-                  <div className="muted mono" style={{ fontSize: 11 }}>{m.role}</div>
-                </div>
-                <span className={'badge ' + (pct > 0.85 ? 'bad' : pct > 0.6 ? 'warn' : 'ok')} style={{ marginLeft: 'auto' }}>
-                  {Math.round(pct * 100)}%
+            <div key={m.id} className="team-list-row" style={{ borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}>
+              {/* 순위 + 아바타 + 이름 */}
+              <div style={{ flex: '0 0 200px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)', width: 16, textAlign: 'center', flexShrink: 0 }}>
+                  {i + 1}
                 </span>
-              </div>
-
-              <div className="col gap-sm">
-                <div className="row" style={{ fontSize: 12 }}>
-                  <span className="muted">주간 부하</span>
-                  <span className="mono" style={{ marginLeft: 'auto' }}>{assigned}h / {m.hours}h</span>
+                <Avatar member={m} size={32} />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{m.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.role}</div>
                 </div>
-                <ProgressBar value={pct} kind={pct > 0.85 ? 'warn' : ''} />
               </div>
 
-              <div className="divider"></div>
-
-              <div className="row" style={{ fontSize: 12 }}>
-                <span className="muted">담당 작업</span>
-                <span className="mono" style={{ marginLeft: 'auto' }}>{w?.taskCount ?? 0}</span>
-              </div>
-              <div className="row" style={{ fontSize: 12, marginTop: 6 }}>
-                <span className="muted">프로젝트</span>
-                <span className="mono" style={{ marginLeft: 'auto' }}>{w?.projectCount ?? 0}</span>
+              {/* 프로그레스 바 */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <LoadBar pct={pct} />
               </div>
 
-              <div className="row gap-sm" style={{ marginTop: 12, flexWrap: 'wrap' }}>
-                {m.skills.map(s => <span key={s} className="badge" style={{ fontSize: 11 }}>{s}</span>)}
+              {/* 부하율 */}
+              <div style={{ flex: '0 0 52px', textAlign: 'right', fontWeight: 700, fontSize: 13, color }}>
+                {Math.round(pct * 100)}%
+              </div>
+
+              {/* 시간 */}
+              <div style={{ flex: '0 0 80px', textAlign: 'right', fontSize: 12, color: 'var(--muted)' }}>
+                {assigned}h / {capacity}h
+              </div>
+
+              {/* 작업 수 */}
+              <div style={{ flex: '0 0 60px', textAlign: 'right', fontSize: 12 }}>
+                {w?.taskCount ?? 0}개
+              </div>
+
+              {/* 프로젝트 수 */}
+              <div style={{ flex: '0 0 60px', textAlign: 'right', fontSize: 12 }}>
+                {w?.projectCount ?? 0}개
               </div>
             </div>
           )
         })}
       </div>
+
+      {/* 스킬 태그 섹션 */}
+      {members.some(m => m.skills?.length > 0) && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="card-head"><h3>팀 스킬</h3></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {members.map(m => m.skills?.length > 0 && (
+              <div key={m.id} className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, width: 80, flexShrink: 0 }}>{m.name}</span>
+                {m.skills.map(s => <span key={s} className="badge" style={{ fontSize: 11 }}>{s}</span>)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

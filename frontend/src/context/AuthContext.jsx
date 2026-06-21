@@ -12,6 +12,7 @@ const buildSession = (me) => ({
   email: me.email ?? '',
   role: toDisplayRole(me.role),
   isAdmin: me.role === 'PM',
+  weeklyCapacityHours: me.weeklyCapacityHours ?? 40,
 })
 
 export function AuthProvider({ children }) {
@@ -55,6 +56,17 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const googleLogin = async (idToken, inviteToken) => {
+    try {
+      const data = await authApi.googleLogin(idToken, inviteToken)
+      const me = await memberApi.getMe()
+      setUser(buildSession(me))
+      return { ok: true, needsRoleSetup: !!data?.needsRoleSetup }
+    } catch (e) {
+      return { ok: false, message: e?.message || 'Google 로그인에 실패했습니다.' }
+    }
+  }
+
   const register = async (name, email, password, role, inviteToken) => {
     try {
       await authApi.register({
@@ -69,7 +81,7 @@ export function AuthProvider({ children }) {
       })
       const me = await memberApi.getMe()
       setUser(buildSession(me))
-      return { ok: true }
+      return { ok: true, needsProfileSetup: true }
     } catch (e) {
       const message =
         e instanceof ApiError && e.code === 'DUPLICATE_EMAIL'
@@ -129,7 +141,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, loading, users,
-      login, register, logout, refreshUser, clearSession,
+      login, googleLogin, register, logout, refreshUser, clearSession,
       loadUsers, updateUserRole, toggleUserActive, deleteUser,
     }}>
       {children}

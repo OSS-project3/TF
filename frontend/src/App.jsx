@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute.jsx'
 import Login from './pages/Login/Login.jsx'
 import Signup from './pages/Signup/Signup.jsx'
+import SetupRole from './pages/SetupRole/SetupRole.jsx'
+import SetupProfile from './pages/SetupProfile/SetupProfile.jsx'
 import Workspace from './Workspace.jsx'
 
 function App() {
@@ -12,6 +14,22 @@ function App() {
         <Routes>
           <Route path="/login"  element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/setup-profile"
+            element={
+              <ProtectedRoute>
+                <SetupProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/setup-role"
+            element={
+              <ProtectedRoute>
+                <SetupRole />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/*"
             element={

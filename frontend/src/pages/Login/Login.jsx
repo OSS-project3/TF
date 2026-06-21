@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { invitationApi } from '../../api'
 import '../auth.css'
@@ -12,7 +13,7 @@ const DEMO = [
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useAuth()
+  const { login, googleLogin } = useAuth()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token') || undefined
 
@@ -22,6 +23,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   const from = location.state?.from?.pathname || '/'
+
+  async function handleGoogleLogin(credential) {
+    setError(''); setLoading(true)
+    const result = await googleLogin(credential, inviteToken)
+    setLoading(false)
+    if (!result.ok) { setError(result.message); return }
+    navigate(result.needsRoleSetup ? '/setup-role' : from, { replace: true })
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -74,6 +83,18 @@ export default function Login() {
             {loading ? '로그인 중…' : '로그인'}
           </button>
         </form>
+
+        <div className="auth-divider">또는 Google로 계속하기</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <GoogleLogin
+            onSuccess={res => handleGoogleLogin(res.credential)}
+            onError={() => setError('Google 로그인에 실패했습니다.')}
+            locale="ko"
+            text="signin_with"
+            shape="rectangular"
+            size="large"
+          />
+        </div>
 
         <div className="auth-divider">데모 계정으로 빠르게 체험</div>
         <div className="demo-row">

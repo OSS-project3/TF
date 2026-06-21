@@ -68,6 +68,10 @@ public class Member extends BaseTimeEntity {
         if (weeklyCapacityHours != null) this.weeklyCapacityHours = weeklyCapacityHours;
     }
 
+    public void updateRole(MemberRole role) {
+        if (role != null) this.role = role;
+    }
+
     public void clearSkills() {
         this.skills.clear();
     }

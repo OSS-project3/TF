@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/AuthContext.jsx'
 import '../auth.css'
 
@@ -7,7 +8,7 @@ const ROLES = ['PM', 'Frontend', 'Backend', 'Designer', 'QA']
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { register } = useAuth()
+  const { register, googleLogin } = useAuth()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token') || undefined
 
@@ -16,6 +17,14 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  async function handleGoogleLogin(credential) {
+    setError(''); setLoading(true)
+    const result = await googleLogin(credential, inviteToken)
+    setLoading(false)
+    if (!result.ok) { setError(result.message); return }
+    navigate(result.needsRoleSetup ? '/setup-role' : '/', { replace: true })
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -27,7 +36,7 @@ export default function Signup() {
     setError(''); setLoading(true)
     const result = await register(form.name.trim(), form.email.trim(), form.password, form.role, inviteToken)
     setLoading(false)
-    if (result.ok) navigate('/', { replace: true })
+    if (result.ok) navigate('/setup-profile', { replace: true })
     else setError(result.message)
   }
 
@@ -70,6 +79,18 @@ export default function Signup() {
             {loading ? '가입 중…' : '가입하기'}
           </button>
         </form>
+
+        <div className="auth-divider">또는 Google로 계속하기</div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={res => handleGoogleLogin(res.credential)}
+            onError={() => setError('Google 로그인에 실패했습니다.')}
+            locale="ko"
+            text="signup_with"
+            shape="rectangular"
+            size="large"
+          />
+        </div>
       </div>
     </div>
   )

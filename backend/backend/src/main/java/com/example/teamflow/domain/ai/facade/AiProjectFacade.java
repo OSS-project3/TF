@@ -66,12 +66,13 @@ public class AiProjectFacade {
                     taskDecomposeAgent.decompose(session.getFeature(), answers);
             TaskDecomposeAgent.DecomposeResult decomposed = decomposeResult.data();
 
-            List<String> taskTitles = decomposed.tasks().stream()
-                    .map(TaskDecomposeAgent.TaskProposal::title).toList();
+            List<AssignmentAgent.TaskInput> taskInputs = decomposed.tasks().stream()
+                    .map(p -> new AssignmentAgent.TaskInput(p.title(), p.estimatedHours()))
+                    .toList();
 
             List<MemberResponse> members = memberService.getMembers(null);
             AiAgentResult<List<AssignmentAgent.Assignment>> assignResult =
-                    assignmentAgent.assign(taskTitles, members);
+                    assignmentAgent.assign(taskInputs, members);
 
             // 이름 → ID 매핑 (대소문자 무시)
             Map<String, Long> nameToId = members.stream()

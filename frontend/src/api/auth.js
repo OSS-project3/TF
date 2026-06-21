@@ -30,6 +30,18 @@ export async function login(payload, remember = true) {
  * 로그아웃. 서버 토큰 블랙리스트 등록 후 로컬 토큰 제거.
  * POST /auth/logout
  */
+/**
+ * Google ID 토큰으로 로그인 / 자동 회원가입.
+ * POST /auth/google
+ */
+export async function googleLogin(idToken, inviteToken, remember = true) {
+  const data = await api.post('/auth/google',
+    { idToken, ...(inviteToken ? { inviteToken } : {}) },
+    { auth: false })
+  if (data?.accessToken) setToken(data.accessToken, remember)
+  return data
+}
+
 export async function logout() {
   try {
     await api.post('/auth/logout')
