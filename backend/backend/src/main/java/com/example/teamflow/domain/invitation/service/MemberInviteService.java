@@ -11,6 +11,7 @@ import com.example.teamflow.domain.member.entity.Member;
 import com.example.teamflow.domain.member.service.MemberService;
 import com.example.teamflow.domain.workspace.entity.Workspace;
 import com.example.teamflow.domain.workspace.service.WorkspaceService;
+import com.example.teamflow.infra.mail.EmailService;
 import com.example.teamflow.infra.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class MemberInviteService {
     private final MemberInvitationRepository memberInvitationRepository;
     private final MemberService memberService;
     private final WorkspaceService workspaceService;
+    private final InvitationService invitationService;
+    private final EmailService emailService;
     private final JwtTokenProvider jwtTokenProvider;
 
     /** PM이 이메일로 팀원을 초대한다. 미가입 이메일도 허용한다. */
@@ -58,8 +61,9 @@ public class MemberInviteService {
                     workspaceId, workspace.getName(),
                     inviterMemberId, inviter.getName(),
                     invitee.getId(), invitee.getEmail()));
+            emailService.sendInviteNotification(invitee.getEmail(), inviter.getName(), workspace.getName());
         } else {
-            // 아직 가입하지 않은 이메일: memberId 없이 이메일만 저장
+            // 아직 가입하지 않은 이메일: 초대 토큰 생성 후 가입 링크 발송
             if (memberInvitationRepository.existsByWorkspaceIdAndInviteeEmailAndStatus(
                     workspaceId, email, MemberInviteStatus.PENDING)) {
                 throw new BusinessException(ErrorCode.INVITE_ALREADY_SENT);
@@ -68,17 +72,24 @@ public class MemberInviteService {
                     workspaceId, workspace.getName(),
                     inviterMemberId, inviter.getName(),
                     null, email));
+            String token = invitationService.create(workspaceId, inviterMemberId);
+            emailService.sendSignupInvite(email, inviter.getName(), workspace.getName(), token);
         }
     }
 
     /**
-     * 해당 이메일로 등록된 PENDING 초대에 memberId 를 연결한다.
-     * 회원가입 직후 호출하여 미가입 상태에서 받은 초대를 활성화한다.
+     * 회원가입 직후 호출 — 해당 이메일로 받은 PENDING 초대에 memberId 를 연결한다.
+     * 이미 joinedWorkspaceId 로 합류했다면 자동 수락, 그 외는 앱에서 선택할 수 있도록 PENDING 유지.
      */
-    public void claimEmailInvitations(String email, Long memberId) {
+    public void claimEmailInvitations(String email, Long memberId, Long joinedWorkspaceId) {
         List<MemberInvitation> pending =
                 memberInvitationRepository.findByInviteeEmailAndStatus(email, MemberInviteStatus.PENDING);
-        pending.forEach(inv -> inv.claim(memberId));
+        for (MemberInvitation inv : pending) {
+            inv.claim(memberId);
+            if (inv.getWorkspaceId().equals(joinedWorkspaceId)) {
+                inv.accept();
+            }
+        }
     }
 
     /** 내가 받은 미처리(PENDING) 참가 요청 목록. */

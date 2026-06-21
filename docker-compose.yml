@@ -28,6 +28,12 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/teamflow
       DB_USERNAME: teamflow
       DB_PASSWORD: teamflow1234
+      # 이메일 발송 (Gmail 앱 비밀번호 사용 권장)
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
     depends_on:
       - postgres
     restart: unless-stopped

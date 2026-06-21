@@ -52,9 +52,6 @@ public class AuthService {
         skills.forEach(member::addSkill);
         memberRepository.save(member);
 
-        // 미가입 상태로 받은 이메일 초대 연결
-        memberInviteService.claimEmailInvitations(member.getEmail(), member.getId());
-
         // 워크스페이스 결정
         Long workspaceId;
         if (StringUtils.hasText(req.inviteToken())) {
@@ -64,6 +61,9 @@ public class AuthService {
             workspaceId = workspace.getId();
         }
         member.setWorkspaceId(workspaceId);
+
+        // 미가입 상태로 받은 이메일 초대 연결 (같은 워크스페이스면 자동 수락)
+        memberInviteService.claimEmailInvitations(member.getEmail(), member.getId(), workspaceId);
 
         return new LoginResponse(jwtTokenProvider.generateToken(member.getId(), member.getRole(), workspaceId));
     }
