@@ -1,6 +1,7 @@
 package com.example.teamflow.infra.mail;
 
 import jakarta.mail.MessagingException;
+import java.io.UnsupportedEncodingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class EmailService {
                 "<a href=\"" + baseUrl + "\" " +
                 "style=\"display:inline-block;padding:11px 28px;background:#6366f1;color:#fff;" +
                 "border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;\">TeamFlow 열기</a>";
-        send(to, "[TeamFlow] " + inviterName + "님이 " + workspaceName + " 워크스페이스에 초대했습니다", buildHtml(content));
+        send(to, "[TeamFlow] " + inviterName + "님이 " + workspaceName + " 워크스페이스에 초대했습니다", buildHtml(content), inviterName);
     }
 
     /** 아직 가입하지 않은 이메일에 가입 링크 포함 초대 발송 */
@@ -52,7 +53,7 @@ public class EmailService {
                 "style=\"display:inline-block;padding:11px 28px;background:#6366f1;color:#fff;" +
                 "border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;\">가입하고 합류하기</a>" +
                 "<p style=\"margin-top:20px;font-size:12px;color:#9ca3af;\">이 링크는 7일 후 만료됩니다.</p>";
-        send(to, "[TeamFlow] " + inviterName + "님이 " + workspaceName + " 워크스페이스에 초대했습니다", buildHtml(content));
+        send(to, "[TeamFlow] " + inviterName + "님이 " + workspaceName + " 워크스페이스에 초대했습니다", buildHtml(content), inviterName);
     }
 
     private boolean isConfigured() {
@@ -64,10 +65,19 @@ public class EmailService {
     }
 
     private void send(String to, String subject, String html) {
+        send(to, subject, html, null);
+    }
+
+    private void send(String to, String subject, String html, String senderName) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(from);
+            try {
+                String displayName = senderName != null ? senderName + " (via TeamFlow)" : "TeamFlow";
+                helper.setFrom(from, displayName);
+            } catch (UnsupportedEncodingException e) {
+                helper.setFrom(from);
+            }
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
