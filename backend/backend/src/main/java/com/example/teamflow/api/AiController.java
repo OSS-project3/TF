@@ -1,6 +1,7 @@
 package com.example.teamflow.api;
 
 import com.example.teamflow.common.response.ApiResponse;
+import com.example.teamflow.common.security.WorkspaceContext;
 import com.example.teamflow.domain.ai.agent.TaskDecomposeAgent;
 import com.example.teamflow.domain.ai.dto.*;
 import com.example.teamflow.domain.ai.facade.AiProjectFacade;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "AI", description = "AI Project Manager API")
 @SecurityRequirement(name = "bearerAuth")
@@ -117,6 +120,17 @@ public class AiController {
                         t.startDate(), t.endDate()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(new AiDecomposeResponse(tasks)));
+    }
+
+    @Operation(
+            summary = "AI 실행 내역 조회",
+            description = "현재 워크스페이스의 자동 모니터링·회의 요약 실행 이력을 최신순으로 반환합니다. " +
+                    "프론트엔드 AIThread 사이드바에서 60초마다 폴링합니다."
+    )
+    @GetMapping("/api/v1/ai/activities")
+    public ResponseEntity<ApiResponse<List<AiActivityResponse>>> getActivities() {
+        Long workspaceId = WorkspaceContext.get();
+        return ResponseEntity.ok(ApiResponse.success(monitoringService.getActivities(workspaceId)));
     }
 
     @Operation(

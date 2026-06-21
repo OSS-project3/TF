@@ -5,13 +5,17 @@ import com.example.teamflow.common.exception.ErrorCode;
 import com.example.teamflow.domain.ai.dto.AiAgentResult;
 import com.example.teamflow.domain.ai.dto.AiRiskResponse;
 import com.example.teamflow.domain.ai.dto.BottleneckReport;
+import com.example.teamflow.domain.ai.dto.RiskItem;
 import com.example.teamflow.infra.openai.OpenAiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -42,10 +46,19 @@ public class RiskAgent {
         OpenAiClient.ChatResult chatResult = openAiClient.chat(SYSTEM_PROMPT, userMessage);
 
         try {
-            AiRiskResponse parsed = objectMapper.readValue(chatResult.content(), AiRiskResponse.class);
-            // analyzedAt은 현재 시각으로 설정
-            AiRiskResponse withTime = new AiRiskResponse(parsed.risks(), LocalDateTime.now());
-            return new AiAgentResult<>(withTime, SYSTEM_PROMPT, chatResult.content(), chatResult.totalTokens());
+            JsonNode root = objectMapper.readTree(chatResult.content());
+
+            List<RiskItem> risks = new ArrayList<>();
+            root.path("risks").forEach(n -> risks.add(new RiskItem(
+                    n.path("level").asText("WARN"),
+                    n.path("message").asText(),
+                    n.path("recommendation").asText()
+            )));
+
+            return new AiAgentResult<>(
+                    new AiRiskResponse(risks, LocalDateTime.now()),
+                    SYSTEM_PROMPT, chatResult.content(), chatResult.totalTokens()
+            );
         } catch (JsonProcessingException e) {
             throw new BusinessException(ErrorCode.AI_PARSE_FAILED);
         }

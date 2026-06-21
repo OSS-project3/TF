@@ -254,7 +254,8 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
                 </div>
                 <div className="field">
                   <label>목표 (1~2문장)</label>
-                  <textarea value={goal} onChange={e => setGoal(e.target.value)} placeholder="예) 결제 플로우를 단순화해 결제 성공률을 12% 향상" />
+                  <textarea value={goal} onChange={e => setGoal(e.target.value.slice(0, 200))} placeholder="예) 결제 플로우를 단순화해 결제 성공률을 12% 향상" maxLength={200} />
+                  <div style={{ textAlign: 'right', fontSize: 11, color: goal.length >= 180 ? 'var(--bad, #e55)' : 'var(--muted)', marginTop: 2 }}>{goal.length}/200</div>
                   {goalSuggestion && <div className="ai-assist"><span className="glyph">AI</span>{goalSuggestion}</div>}
                 </div>
                 <div className="field">
@@ -318,12 +319,16 @@ export default function CreateProjectModal({ members, currentUser, onClose, onCr
                   <div className="muted" style={{ fontSize: 12 }}>현재 구현 상황을 자유롭게 설명</div>
                 </button>
                 {contextMode === 'custom' && (
-                  <textarea
-                    value={customContext}
-                    onChange={e => setCustomContext(e.target.value)}
-                    placeholder="예) 프론트엔드 완료, ERD 설계됨. 결제 관련 백엔드 API만 구현 필요."
-                    style={{ fontSize: 13, padding: '8px 10px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--surface)', minHeight: 72, resize: 'vertical' }}
-                  />
+                  <>
+                    <textarea
+                      value={customContext}
+                      onChange={e => setCustomContext(e.target.value.slice(0, 200))}
+                      placeholder="예) 프론트엔드 완료, ERD 설계됨. 결제 관련 백엔드 API만 구현 필요."
+                      maxLength={200}
+                      style={{ fontSize: 13, padding: '8px 10px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--surface)', minHeight: 72, resize: 'vertical' }}
+                    />
+                    <div style={{ textAlign: 'right', fontSize: 11, color: customContext.length >= 180 ? 'var(--bad, #e55)' : 'var(--muted)', marginTop: 2 }}>{customContext.length}/200</div>
+                  </>
                 )}
 
                 {aiError && <div className="ai-assist" style={{ color: 'var(--bad)' }}><span className="glyph">!</span>{aiError}</div>}

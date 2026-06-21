@@ -4,6 +4,7 @@ import com.example.teamflow.common.enums.AgentType;
 import com.example.teamflow.common.enums.ProjectStatus;
 import com.example.teamflow.domain.ai.agent.RiskAgent;
 import com.example.teamflow.domain.ai.detector.BottleneckDetector;
+import com.example.teamflow.domain.ai.dto.AiActivityResponse;
 import com.example.teamflow.domain.ai.dto.AiAgentResult;
 import com.example.teamflow.domain.ai.dto.AiRiskResponse;
 import com.example.teamflow.domain.ai.dto.BottleneckReport;
@@ -23,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +74,34 @@ public class MonitoringService {
                 result.promptUsed(), result.rawResponse(), result.tokenUsage()));
 
         log.info("프로젝트 {} 위험 분석 완료 — 위험 {}개", project.id(), result.data().risks().size());
+    }
+
+    private static final List<AgentType> ACTIVITY_TYPES = List.of(AgentType.MONITORING, AgentType.MEETING);
+    private static final Map<AgentType, String> ACTIVITY_LABELS = Map.of(
+            AgentType.MONITORING, "AI 위험 모니터링",
+            AgentType.MEETING,    "AI 회의 요약"
+    );
+
+    @Transactional(readOnly = true)
+    public List<AiActivityResponse> getActivities(Long workspaceId) {
+        List<ProjectResponse> projects = projectService.getProjectsByWorkspace(workspaceId);
+        if (projects.isEmpty()) return List.of();
+
+        Map<Long, String> projectNames = projects.stream()
+                .collect(Collectors.toMap(ProjectResponse::id, ProjectResponse::name));
+        List<Long> projectIds = List.copyOf(projectNames.keySet());
+
+        return aiRequestHistoryRepository
+                .findTop20ByProjectIdInAndAgentTypeInOrderByCreatedAtDesc(projectIds, ACTIVITY_TYPES)
+                .stream()
+                .map(h -> new AiActivityResponse(
+                        h.getId(),
+                        h.getAgentType(),
+                        ACTIVITY_LABELS.getOrDefault(h.getAgentType(), h.getAgentType().name()),
+                        h.getProjectId(),
+                        projectNames.getOrDefault(h.getProjectId(), ""),
+                        h.getCreatedAt()))
+                .toList();
     }
 
     // GET /projects/{id}/risks 에서 반환

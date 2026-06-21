@@ -232,9 +232,9 @@ export default function Meetings({ members, projects }) {
           <div className="meeting-input">
             <div className="row">
               <span className="tiny">회의 노트</span>
-              <span className="tiny" style={{ marginLeft: 'auto', color: 'var(--muted-2)' }}>{notes.length} 자</span>
+              <span className="tiny" style={{ marginLeft: 'auto', color: notes.length >= 180 ? 'var(--bad, #e55)' : 'var(--muted-2)' }}>{notes.length}/200 자</span>
             </div>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="회의 노트를 붙여넣으세요. 발언자, 결정사항, 다음 액션…" disabled={phase !== 'input'} />
+            <textarea value={notes} onChange={e => setNotes(e.target.value.slice(0, 200))} maxLength={200} placeholder="회의 노트를 붙여넣으세요. 발언자, 결정사항, 다음 액션…" disabled={phase !== 'input'} />
             <div className="row">
               {phase === 'input' && (
                 <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={process} disabled={notes.length < 20}>✸ AI로 요약하기</button>

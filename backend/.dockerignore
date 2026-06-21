@@ -4,7 +4,9 @@
 *.iml
 docs
 CLAUDE.md
-**/build
+**/build/classes
+**/build/generated
+**/build/tmp
 **/.gradle
 frontend
 **/application-local.properties

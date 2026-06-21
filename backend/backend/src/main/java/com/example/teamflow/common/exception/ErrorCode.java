@@ -31,6 +31,7 @@ public enum ErrorCode {
     PROPOSAL_NOT_FOUND("PROPOSAL_NOT_FOUND", "일정 재최적화 제안을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // AI
+    AI_DISABLED("AI_DISABLED", "AI 기능이 비활성화되어 있습니다. OPENAI_API_KEY를 설정하세요.", HttpStatus.SERVICE_UNAVAILABLE),
     AI_SERVICE_ERROR("AI_SERVICE_ERROR", "AI 서비스 호출 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     AI_PARSE_FAILED("AI_PARSE_FAILED", "AI 응답 파싱에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     AI_SESSION_NOT_FOUND("AI_SESSION_NOT_FOUND", "AI 세션을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

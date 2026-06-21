@@ -1,6 +1,6 @@
 import { useSyncExternalStore, useEffect, useState } from 'react'
 import './AIThread.css'
-import { subscribe, getSnapshot } from '../../api/aiActivity.js'
+import { subscribe, getSnapshot, syncFromServer } from '../../api/aiActivity.js'
 
 // 실제 AI 실행 내역만 표시한다 (목업 팁 제거).
 // running = 실행 중, done = 완료, error = 실패
@@ -22,6 +22,13 @@ function timeAgo(ts) {
 export default function AIThread() {
   const items = useSyncExternalStore(subscribe, getSnapshot)
   const [, setTick] = useState(0)
+
+  // 서버 이력 초기 로드 + 60초 폴링
+  useEffect(() => {
+    syncFromServer()
+    const id = setInterval(syncFromServer, 60000)
+    return () => clearInterval(id)
+  }, [])
 
   // 상대 시간 주기적 갱신 (항목이 있을 때만)
   useEffect(() => {

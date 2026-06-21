@@ -4,12 +4,17 @@ import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
 import com.example.teamflow.domain.ai.dto.AiAgentResult;
 import com.example.teamflow.domain.ai.dto.AiSummaryResponse;
+import com.example.teamflow.domain.ai.dto.TodoItem;
 import com.example.teamflow.domain.meeting.dto.MeetingResponse;
 import com.example.teamflow.infra.openai.OpenAiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -35,8 +40,21 @@ public class MeetingAgent {
         OpenAiClient.ChatResult chatResult = openAiClient.chat(SYSTEM_PROMPT, userMessage);
 
         try {
-            AiSummaryResponse parsed = objectMapper.readValue(chatResult.content(), AiSummaryResponse.class);
-            return new AiAgentResult<>(parsed, SYSTEM_PROMPT, chatResult.content(), chatResult.totalTokens());
+            JsonNode root = objectMapper.readTree(chatResult.content());
+
+            List<String> summary = new ArrayList<>();
+            root.path("summary").forEach(n -> summary.add(n.asText()));
+
+            List<TodoItem> todos = new ArrayList<>();
+            root.path("todos").forEach(n -> todos.add(new TodoItem(
+                    n.path("title").asText(),
+                    n.path("assignee").isNull() ? null : n.path("assignee").asText(null)
+            )));
+
+            return new AiAgentResult<>(
+                    new AiSummaryResponse(summary, todos),
+                    SYSTEM_PROMPT, chatResult.content(), chatResult.totalTokens()
+            );
         } catch (JsonProcessingException e) {
             throw new BusinessException(ErrorCode.AI_PARSE_FAILED);
         }

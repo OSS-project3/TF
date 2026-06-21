@@ -43,6 +43,12 @@ public class ProjectService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> getProjectsByWorkspace(Long workspaceId) {
+        return projectRepository.findAllByWorkspaceIdAndStatus(workspaceId, ProjectStatus.ACTIVE)
+                .stream().map(this::toResponse).toList();
+    }
+
     @Transactional
     public ProjectCreateResponse createProject(ProjectCreateRequest request) {
         validateDeadlineRange(request.deadline());

@@ -11,7 +11,9 @@ import { track } from './aiActivity.js'
  *                  startDate: string, endDate: string }> }>}
  *   startDate/endDate: AI가 현재 날짜와 마감일 기준으로 산정한 일정 (yyyy-MM-dd, 빈 값 가능)
  */
-export const decompose = (payload) => track('AI 작업 분해', api.post('/ai/decompositions', payload))
+// track() 미사용 — 작업 분해는 프로젝트 생성 시 사용자가 직접 트리거하는 액션이므로
+// AI 실행내역(자동 모니터링 전용)에 표시하지 않음
+export const decompose = (payload) => api.post('/ai/decompositions', payload)
 
 /**
  * AI 회의 요약. POST /ai/meeting-summaries

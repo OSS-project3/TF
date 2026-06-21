@@ -3,6 +3,17 @@
 #   접속:  프론트 http://localhost:3000  ·  백엔드/Swagger http://localhost:8080/swagger-ui.html
 #   종료:  docker compose down
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: teamflow-postgres
+    environment:
+      POSTGRES_USER: teamflow
+      POSTGRES_PASSWORD: teamflow1234
+      POSTGRES_DB: teamflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -11,11 +22,14 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      # application.properties의 ${JWT_SECRET:...} 기본값을 덮어쓰려면 수정
       JWT_SECRET: dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9ydGVhbWZsb3diYWNrZW5kYXBw
-      # 루트 .env 파일의 OPENAI_API_KEY 를 주입 (없으면 AI 기능 비활성)
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      DB_URL: jdbc:postgresql://postgres:5432/teamflow
+      DB_USERNAME: teamflow
+      DB_PASSWORD: teamflow1234
+    depends_on:
+      - postgres
     restart: unless-stopped
 
   frontend:
@@ -27,3 +41,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:
