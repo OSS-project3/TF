@@ -77,8 +77,8 @@ public class BottleneckDetector {
 
         for (List<Task> tasks : List.of(a, b, c)) {
             tasks.stream()
-                    .filter(t -> t.getAssigneeId() != null)
-                    .map(Task::getAssigneeId)
+                    .filter(t -> !t.getAssigneeIds().isEmpty())
+                    .flatMap(t -> t.getAssigneeIds().stream())
                     .forEach(ids::add);
         }
 
@@ -115,9 +115,11 @@ public class BottleneckDetector {
                 .map(t -> new BottleneckReport.TaskInfo(
                         t.getId(),
                         t.getTitle(),
-                        t.getAssigneeId() != null
-                                ? nameMap.getOrDefault(t.getAssigneeId(), "미배정")
-                                : "미배정"
+                        t.getAssigneeIds().isEmpty()
+                                ? "미배정"
+                                : t.getAssigneeIds().stream()
+                                        .map(id -> nameMap.getOrDefault(id, "미배정"))
+                                        .collect(Collectors.joining(", "))
                 ))
                 .toList();
     }

@@ -90,7 +90,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.getWorkload(memberId, from, to)));
     }
 
-    @Operation(summary = "내 프로필 수정", description = "이름·이니셜·주간 가용 시간·스킬을 수정합니다. null 필드는 변경하지 않음. skills에 빈 배열 전달 시 전체 삭제.")
+    @Operation(summary = "내 프로필 수정", description = "이름·이니셜·역할·주간 가용 시간·스킬을 수정합니다. null 필드는 변경하지 않음. skills에 빈 배열 전달 시 전체 삭제. Google 가입 후 역할 선택(`role` 필드)에도 사용합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "INVALID_INPUT — 유효성 검사 실패")
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<MemberResponse>> updateMe(

@@ -38,7 +38,7 @@ public class MeetingTaskFacade {
                                     "개발",
                                     1,
                                     TaskDifficulty.EASY,
-                                    todo.getAssigneeId(),
+                                    todo.getAssigneeId() != null ? List.of(todo.getAssigneeId()) : List.of(),
                                     null,
                                     todo.getDueDate(),
                                     null,

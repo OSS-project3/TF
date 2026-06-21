@@ -48,16 +48,22 @@ public class SwaggerConfig {
                                 | 400 | `INVALID_INPUT` | 요청 필드 유효성 검사 실패 |
                                 | 401 | `INVALID_CREDENTIALS` | 이메일/비밀번호 불일치 |
                                 | 401 | `WRONG_PASSWORD` | 비밀번호 변경 시 현재 비밀번호 불일치 |
+                                | 401 | `GOOGLE_AUTH_INVALID` | Google ID 토큰 검증 실패 또는 clientId 불일치 |
+                                | 401 | `INVITE_INVALID` | 유효하지 않은 초대 토큰 |
                                 | 401 | _(토큰 없음/만료)_ | Authorization 헤더 누락 또는 JWT 만료 |
                                 | 403 | `FORBIDDEN` | PM 역할이 아닌 멤버가 PM 전용 API 호출 |
                                 | 404 | `MEMBER_NOT_FOUND` | 존재하지 않는 멤버 ID |
                                 | 404 | `PROJECT_NOT_FOUND` | 존재하지 않는 프로젝트 ID |
                                 | 404 | `TASK_NOT_FOUND` | 존재하지 않는 태스크 ID |
                                 | 404 | `MEETING_NOT_FOUND` | 존재하지 않는 회의록 ID |
+                                | 404 | `WORKSPACE_NOT_FOUND` | 존재하지 않는 워크스페이스 ID |
                                 | 409 | `DUPLICATE_EMAIL` | 이미 사용 중인 이메일로 회원가입 시도 |
                                 | 409 | `DUPLICATE_PROJECT_MEMBER` | 이미 프로젝트에 소속된 멤버 추가 시도 |
+                                | 410 | `INVITE_EXPIRED` | 만료된 초대 토큰 (7일 초과) |
+                                | 410 | `INVITE_USED` | 이미 사용된 초대 토큰 |
                                 | 422 | `CIRCULAR_TASK_DEPENDENCY` | 태스크 선행 관계 순환 감지 |
                                 | 500 | `INTERNAL_ERROR` | 서버 내부 오류 |
+                                | 503 | `GOOGLE_AUTH_DISABLED` | 서버에 GOOGLE_CLIENT_ID 미설정 (Google 로그인 비활성) |
                                 """)
                         .contact(new Contact().name("TeamFlow Backend")))
                 .components(new Components()

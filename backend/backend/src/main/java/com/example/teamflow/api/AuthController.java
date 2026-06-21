@@ -49,7 +49,10 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
     }
 
-    @Operation(summary = "Google 로그인 / 회원가입", description = "Google ID 토큰으로 로그인합니다. 계정이 없으면 자동으로 가입됩니다.")
+    @Operation(summary = "Google 로그인 / 회원가입", description = "Google ID 토큰으로 로그인합니다. 계정이 없으면 자동 가입 후 워크스페이스가 생성됩니다. 신규 가입 시 `needsRoleSetup: true`가 반환되면 `/setup-role` 화면에서 역할을 선택해야 합니다. `inviteToken`을 함께 전달하면 해당 워크스페이스로 자동 합류합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인/가입 성공 — accessToken 반환. 신규 가입이면 needsRoleSetup=true")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "GOOGLE_AUTH_INVALID — ID 토큰 검증 실패 또는 clientId 불일치")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "GOOGLE_AUTH_DISABLED — 서버에 GOOGLE_CLIENT_ID 미설정")
     @PostMapping("/google")
     public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(
             @RequestBody GoogleLoginRequest request) {
