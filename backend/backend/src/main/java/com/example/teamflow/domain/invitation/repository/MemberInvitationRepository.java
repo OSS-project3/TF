@@ -13,4 +13,9 @@ public interface MemberInvitationRepository extends JpaRepository<MemberInvitati
 
     boolean existsByWorkspaceIdAndInviteeMemberIdAndStatus(
             Long workspaceId, Long inviteeMemberId, MemberInviteStatus status);
+
+    List<MemberInvitation> findByInviteeEmailAndStatus(String email, MemberInviteStatus status);
+
+    boolean existsByWorkspaceIdAndInviteeEmailAndStatus(
+            Long workspaceId, String inviteeEmail, MemberInviteStatus status);
 }

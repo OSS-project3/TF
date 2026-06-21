@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 이메일 기반 팀원 초대(참가 요청) 서비스.
@@ -34,28 +35,50 @@ public class MemberInviteService {
     private final WorkspaceService workspaceService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    /** PM이 이메일로 팀원을 초대한다. */
+    /** PM이 이메일로 팀원을 초대한다. 미가입 이메일도 허용한다. */
     public void invite(Long workspaceId, Long inviterMemberId, String email) {
         Member inviter = memberService.findById(inviterMemberId);
-        Member invitee = memberService.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVITE_TARGET_NOT_FOUND));
-
-        if (invitee.getId().equals(inviterMemberId)) {
-            throw new BusinessException(ErrorCode.INVITE_SELF);
-        }
-        if (workspaceId.equals(invitee.getWorkspaceId())) {
-            throw new BusinessException(ErrorCode.INVITE_ALREADY_MEMBER);
-        }
-        if (memberInvitationRepository.existsByWorkspaceIdAndInviteeMemberIdAndStatus(
-                workspaceId, invitee.getId(), MemberInviteStatus.PENDING)) {
-            throw new BusinessException(ErrorCode.INVITE_ALREADY_SENT);
-        }
+        Optional<Member> inviteeOpt = memberService.findByEmail(email);
 
         Workspace workspace = workspaceService.getById(workspaceId);
-        memberInvitationRepository.save(MemberInvitation.create(
-                workspaceId, workspace.getName(),
-                inviterMemberId, inviter.getName(),
-                invitee.getId(), invitee.getEmail()));
+
+        if (inviteeOpt.isPresent()) {
+            Member invitee = inviteeOpt.get();
+            if (invitee.getId().equals(inviterMemberId)) {
+                throw new BusinessException(ErrorCode.INVITE_SELF);
+            }
+            if (workspaceId.equals(invitee.getWorkspaceId())) {
+                throw new BusinessException(ErrorCode.INVITE_ALREADY_MEMBER);
+            }
+            if (memberInvitationRepository.existsByWorkspaceIdAndInviteeMemberIdAndStatus(
+                    workspaceId, invitee.getId(), MemberInviteStatus.PENDING)) {
+                throw new BusinessException(ErrorCode.INVITE_ALREADY_SENT);
+            }
+            memberInvitationRepository.save(MemberInvitation.create(
+                    workspaceId, workspace.getName(),
+                    inviterMemberId, inviter.getName(),
+                    invitee.getId(), invitee.getEmail()));
+        } else {
+            // 아직 가입하지 않은 이메일: memberId 없이 이메일만 저장
+            if (memberInvitationRepository.existsByWorkspaceIdAndInviteeEmailAndStatus(
+                    workspaceId, email, MemberInviteStatus.PENDING)) {
+                throw new BusinessException(ErrorCode.INVITE_ALREADY_SENT);
+            }
+            memberInvitationRepository.save(MemberInvitation.create(
+                    workspaceId, workspace.getName(),
+                    inviterMemberId, inviter.getName(),
+                    null, email));
+        }
+    }
+
+    /**
+     * 해당 이메일로 등록된 PENDING 초대에 memberId 를 연결한다.
+     * 회원가입 직후 호출하여 미가입 상태에서 받은 초대를 활성화한다.
+     */
+    public void claimEmailInvitations(String email, Long memberId) {
+        List<MemberInvitation> pending =
+                memberInvitationRepository.findByInviteeEmailAndStatus(email, MemberInviteStatus.PENDING);
+        pending.forEach(inv -> inv.claim(memberId));
     }
 
     /** 내가 받은 미처리(PENDING) 참가 요청 목록. */

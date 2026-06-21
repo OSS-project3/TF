@@ -65,6 +65,11 @@ public class MemberInvitation {
         return inv;
     }
 
+    /** 회원가입 후 실제 memberId 를 연결한다 (미가입 이메일 초대용). */
+    public void claim(Long memberId) {
+        this.inviteeMemberId = memberId;
+    }
+
     public boolean isPending() {
         return status == MemberInviteStatus.PENDING;
     }

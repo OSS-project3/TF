@@ -3,6 +3,7 @@ package com.example.teamflow.domain.member.service;
 import com.example.teamflow.common.exception.BusinessException;
 import com.example.teamflow.common.exception.ErrorCode;
 import com.example.teamflow.domain.invitation.service.InvitationService;
+import com.example.teamflow.domain.invitation.service.MemberInviteService;
 import com.example.teamflow.domain.member.dto.LoginRequest;
 import com.example.teamflow.domain.member.dto.LoginResponse;
 import com.example.teamflow.domain.member.dto.RegisterRequest;
@@ -30,6 +31,7 @@ public class AuthService {
     private final TokenBlacklist tokenBlacklist;
     private final WorkspaceService workspaceService;
     private final InvitationService invitationService;
+    private final MemberInviteService memberInviteService;
 
     @Transactional
     public LoginResponse register(RegisterRequest req) {
@@ -49,6 +51,9 @@ public class AuthService {
         List<String> skills = req.skills() != null ? req.skills() : List.of();
         skills.forEach(member::addSkill);
         memberRepository.save(member);
+
+        // 미가입 상태로 받은 이메일 초대 연결
+        memberInviteService.claimEmailInvitations(member.getEmail(), member.getId());
 
         // 워크스페이스 결정
         Long workspaceId;
